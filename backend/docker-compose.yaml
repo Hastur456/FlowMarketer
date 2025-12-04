@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:16
+    image: postgres:18-alpine
     container_name: backend_postgres
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -21,8 +21,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis_data:/data
+
 volumes:
   postgres_data:
+  redis_data:
+    driver: local
 
 networks:
   backend_network:

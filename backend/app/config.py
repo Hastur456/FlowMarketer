@@ -29,3 +29,4 @@ class Settings(BaseSettings):
     
 
 settings = Settings()
+database_url = settings.get_url()
