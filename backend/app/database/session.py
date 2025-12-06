@@ -1,4 +1,3 @@
-# app/database/session.py
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from app.database.engine import engine
 from functools import wraps

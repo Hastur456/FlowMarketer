@@ -8,7 +8,7 @@ from datetime import datetime
 class Base(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
-    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
     create_at: Mapped[datetime] = mapped_column(
         TIMESTAMP, server_default=func.now()
     )

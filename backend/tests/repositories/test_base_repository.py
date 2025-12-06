@@ -2,34 +2,35 @@
 import pytest
 from pydantic import BaseModel
 from app.repositories.base_repository import BaseRepository
-from app.models.test_model import TestModel
+from app.models.test_model import ExecutableModel
 
 
-class TestModelCreate(BaseModel):
+class ModelCreate(BaseModel):
     name: str
     slug: str
 
 
-class TestModelUpdate(BaseModel):
+class ModelUpdate(BaseModel):
     name: str | None = None
     slug: str | None = None
 
+    class Config:
+        from_attributes = True
 
-class TestModelFilter(BaseModel):
+
+class ModelFilter(BaseModel):
     name: str | None = None
 
 
-class TestModelRepository(BaseRepository[TestModel]):
-    model = TestModel
+class ModelRepository(BaseRepository[ExecutableModel]):
+    model = ExecutableModel
 
-
-# ==================== ТЕСТЫ (БЕЗ ФАБРИКИ) ====================
 
 @pytest.mark.asyncio
-async def test_create():
+async def test_create(db_session):
     """Создание записи"""
-    data = TestModelCreate(name="Product", slug="product-1")
-    created = await TestModelRepository.create(data=data)
+    data = ModelCreate(name="Product", slug="product-1")
+    created = await ModelRepository.create(data=data)
     
     assert created.id is not None
     assert created.name == "Product"
@@ -37,13 +38,13 @@ async def test_create():
 
 
 @pytest.mark.asyncio
-async def test_find_by_id():
+async def test_find_by_id(db_session):
     """Поиск по ID"""
     # ✅ Создаём модель вручную
-    data = TestModelCreate(name="Find", slug="find-me")
-    obj = await TestModelRepository.create(data=data)
+    data = ModelCreate(name="Find", slug="find-me")
+    obj = await ModelRepository.create(data=data)
     
-    found = await TestModelRepository.find_by_id(data_id=obj.id)
+    found = await ModelRepository.find_by_id(data_id=obj.id)
     
     assert found is not None
     assert found.id == obj.id
@@ -51,116 +52,116 @@ async def test_find_by_id():
 
 
 @pytest.mark.asyncio
-async def test_find_by_id_not_found():
+async def test_find_by_id_not_found(db_session):
     """Поиск не найден"""
-    found = await TestModelRepository.find_by_id(data_id="fake-id-12345678")
+    found = await ModelRepository.find_by_id(data_id="fake-id-12345678")
     assert found is None
 
 
 @pytest.mark.asyncio
-async def test_find_all():
+async def test_find_all(db_session):
     """Получить все"""
-    await TestModelRepository.create(data=TestModelCreate(name="Product 1", slug="p1"))
-    await TestModelRepository.create(data=TestModelCreate(name="Product 2", slug="p2"))
+    await ModelRepository.create(data=ModelCreate(name="Product 1", slug="p1"))
+    await ModelRepository.create(data=ModelCreate(name="Product 2", slug="p2"))
     
-    records = await TestModelRepository.find_all()
+    records = await ModelRepository.find_all()
     
     assert len(records) == 2
 
 
 @pytest.mark.asyncio
-async def test_find_all_empty():
+async def test_find_all_empty(db_session):
     """Получить все из пустой БД"""
-    records = await TestModelRepository.find_all()
+    records = await ModelRepository.find_all()
     assert len(records) == 0
 
 
 @pytest.mark.asyncio
-async def test_find_all_with_filter():
+async def test_find_all_with_filter(db_session):
     """Получить с фильтром"""
-    await TestModelRepository.create(data=TestModelCreate(name="Product A", slug="pa"))
-    await TestModelRepository.create(data=TestModelCreate(name="Product B", slug="pb"))
+    await ModelRepository.create(data=ModelCreate(name="Product A", slug="pa"))
+    await ModelRepository.create(data=ModelCreate(name="Product B", slug="pb"))
     
-    filters = TestModelFilter(name="Product A")
-    records = await TestModelRepository.find_all(filters=filters)
+    filters = ModelFilter(name="Product A")
+    records = await ModelRepository.find_all(filters=filters)
     
     assert len(records) == 1
-    assert records.name == "Product A"
+    assert records[-1].name == "Product A"
 
 
 @pytest.mark.asyncio
-async def test_update():
+async def test_update(db_session):
     """Обновление"""
-    obj = await TestModelRepository.create(data=TestModelCreate(name="Old", slug="old"))
+    obj = await ModelRepository.create(data=ModelCreate(name="Old", slug="old"))
     
-    data = TestModelUpdate(name="New")
-    updated = await TestModelRepository.update(data_id=obj.id, data=data)
+    data = ModelUpdate(name="New")
+    updated = await ModelRepository.update(data_id=obj.id, data=data)
     
     assert updated.name == "New"
     assert updated.slug == "old"  # не изменилось
 
 
 @pytest.mark.asyncio
-async def test_update_not_found():
+async def test_update_not_found(db_session):
     """Обновление несуществующей"""
-    data = TestModelUpdate(name="New")
-    updated = await TestModelRepository.update(data_id="fake-id-12345678", data=data)
+    data = ModelUpdate(name="New")
+    updated = await ModelRepository.update(data_id="fake-id-12345678", data=data)
     assert updated is None
 
 
 @pytest.mark.asyncio
-async def test_delete():
+async def test_delete(db_session):
     """Удаление"""
-    obj = await TestModelRepository.create(data=TestModelCreate(name="Delete me", slug="delete"))
+    obj = await ModelRepository.create(data=ModelCreate(name="Delete me", slug="delete"))
     
-    deleted = await TestModelRepository.delete(data_id=obj.id)
+    deleted = await ModelRepository.delete(data_id=obj.id)
     
     assert deleted is True
-    found = await TestModelRepository.find_by_id(data_id=obj.id)
+    found = await ModelRepository.find_by_id(data_id=obj.id)
     assert found is None
 
 
 @pytest.mark.asyncio
-async def test_delete_not_found():
+async def test_delete_not_found(db_session):
     """Удаление несуществующей"""
-    deleted = await TestModelRepository.delete(data_id="fake-id-12345678")
+    deleted = await ModelRepository.delete(data_id="fake-id-12345678")
     assert deleted is False
 
 
 @pytest.mark.asyncio
-async def test_count():
+async def test_count(db_session):
     """Подсчет"""
-    await TestModelRepository.create(data=TestModelCreate(name="P1", slug="p1"))
-    await TestModelRepository.create(data=TestModelCreate(name="P2", slug="p2"))
-    await TestModelRepository.create(data=TestModelCreate(name="P3", slug="p3"))
+    await ModelRepository.create(data=ModelCreate(name="P1", slug="p1"))
+    await ModelRepository.create(data=ModelCreate(name="P2", slug="p2"))
+    await ModelRepository.create(data=ModelCreate(name="P3", slug="p3"))
     
-    count = await TestModelRepository.count()
+    count = await ModelRepository.count()
     assert count == 3
 
 
 @pytest.mark.asyncio
-async def test_count_with_filter():
+async def test_count_with_filter(db_session):
     """Подсчет с фильтром"""
-    await TestModelRepository.create(data=TestModelCreate(name="A", slug="a1"))
-    await TestModelRepository.create(data=TestModelCreate(name="A", slug="a2"))
-    await TestModelRepository.create(data=TestModelCreate(name="B", slug="b1"))
+    await ModelRepository.create(data=ModelCreate(name="A", slug="a1"))
+    await ModelRepository.create(data=ModelCreate(name="A", slug="a2"))
+    await ModelRepository.create(data=ModelCreate(name="B", slug="b1"))
     
-    filters = TestModelFilter(name="A")
-    count = await TestModelRepository.count(filters=filters)
+    filters = ModelFilter(name="A")
+    count = await ModelRepository.count(filters=filters)
     assert count == 2
 
 
 @pytest.mark.asyncio
-async def test_exists_true():
+async def test_exists_true(db_session):
     """Существует"""
-    obj = await TestModelRepository.create(data=TestModelCreate(name="Exists", slug="exists"))
+    obj = await ModelRepository.create(data=ModelCreate(name="Exists", slug="exists"))
     
-    exists = await TestModelRepository.exists(id=obj.id)
+    exists = await ModelRepository.exists(data_id=obj.id)
     assert exists is True
 
 
 @pytest.mark.asyncio
-async def test_exists_false():
+async def test_exists_false(db_session):
     """Не существует"""
-    exists = await TestModelRepository.exists(id="fake-id-12345678")
+    exists = await ModelRepository.exists(data_id="fake-id-12345678")
     assert exists is False

@@ -20,16 +20,16 @@ class BaseRepository(Generic[T]):
     @connection(commit=False)
     async def find_by_id(cls, session: AsyncSession, data_id: str):
         try:
-            query = select(cls.model).filter_by(data_id)
+            query = select(cls.model).where(cls.model.id == data_id)
             
             response = await session.execute(query)
             record = response.scalar_one_or_none()
 
             if not (record is None):
-                logger.debug("Найдена запись {}, по id {data_id}".format(record, data_id))
+                logger.info("Найдена запись {}, по id {}".format(record, data_id))
                 return record
             else:
-                logger.debug("Запись с id: {}, не найдена".format(data_id))
+                logger.info("Запись с id: {}, не найдена".format(data_id))
                 return None
         except SQLAlchemyError as e:
             logger.error("Ошибка при поиске по id {}, error: {}".format(data_id, e))
@@ -62,7 +62,8 @@ class BaseRepository(Generic[T]):
 
             session.add(template)
             await session.flush()
-
+            logger.info(f"Объект успешно создан: {data}")
+            return template
         except SQLAlchemyError as e:
             logger.error("Ошибка при выполнении добавлении в базу даннх объекта: {}, ошибка: {}".format(data_dict, e))
 
@@ -75,6 +76,10 @@ class BaseRepository(Generic[T]):
             response = await session.execute(query)
             record = response.scalar_one_or_none()
 
+            if record is None:
+                logger.warning("Объект с ID {} не найден".format(data_id))
+                return None
+
             instance = data.model_dump(exclude_unset=False)
 
             if instance is None:
@@ -82,11 +87,11 @@ class BaseRepository(Generic[T]):
                 return None
 
             for key, value in instance.items():
-                if hasattr(record, key):
-                    record[key] = value
+                if hasattr(record, key) and value is not None:
+                    setattr(record, key, value)
 
-            session.add(instance)
             await session.flush()
+            await session.refresh(record)
 
             logger.info("Данные с ID {} изменены".format(data_id))
 
@@ -101,12 +106,18 @@ class BaseRepository(Generic[T]):
     @connection(commit=True)
     async def delete(cls, session: AsyncSession, data_id: str):
         try:
-            query = select(cls.model).where(cls.mdoel.id == data_id)
+            query = select(cls.model).where(cls.model.id == data_id)
             request = await session.execute(query)
             record = request.scalar_one_or_none()
 
-            session.delete(record)
+            if record is None:
+                logger.warning("Объект с ID {} не найден".format(data_id))
+                return False
+            
+            await session.delete(record)
             await session.flush()
+
+            return True
 
         except SQLAlchemyError as e:
             logger.error("Ошибка при удалении данных с ID: {}, ошибка: {}".format(data_id, e))
@@ -128,4 +139,20 @@ class BaseRepository(Generic[T]):
         
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении количества объектов по фильтрам {}, ошибка: {}".format(filters_dict, e))
+            raise
+
+    @classmethod
+    @connection(commit=False)
+    async def exists(cls, session: AsyncSession, data_id: str):
+        try:
+            response = await cls.find_by_id(data_id=data_id)
+
+            if response is None:
+                logger.warning("Объект с ID {} не существует".format(data_id))
+                return False
+
+            return True
+        
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при проверке наличия объекта с ID {}, ошибка: {}".format(data_id, e))
             raise
