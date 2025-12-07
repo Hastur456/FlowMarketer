@@ -2,7 +2,7 @@ from sqlalchemy import select, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.repositories.base_repository import BaseRepository
+from backend.app.repositories.postgres.base_repository import BaseRepository
 from app.models.product import Product
 from database.session import connection
 from app.utils.logger import logger

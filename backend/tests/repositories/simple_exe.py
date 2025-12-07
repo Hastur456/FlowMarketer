@@ -1,6 +1,6 @@
 import pytest
 from pydantic import BaseModel
-from app.repositories.base_repository import BaseRepository
+from backend.app.repositories.postgres.base_repository import BaseRepository
 from app.models.test_model import ExecutableModel
 
 

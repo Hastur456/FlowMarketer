@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
-from app.repositories.base_repository import BaseRepository
+from backend.app.repositories.postgres.base_repository import BaseRepository
 from app.models.cart import CartItem
 from database.session import connection
 from app.utils.logger import logger
