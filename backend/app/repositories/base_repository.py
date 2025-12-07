@@ -141,6 +141,7 @@ class BaseRepository(Generic[T]):
             logger.error("Ошибка при получении количества объектов по фильтрам {}, ошибка: {}".format(filters_dict, e))
             raise
 
+
     @classmethod
     @connection(commit=False)
     async def exists(cls, session: AsyncSession, data_id: str):

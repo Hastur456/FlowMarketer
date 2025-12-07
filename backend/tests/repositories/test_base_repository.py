@@ -1,6 +1,6 @@
 # tests/repositories/test_base_repository.py
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from app.repositories.base_repository import BaseRepository
 from app.models.test_model import ExecutableModel
 
@@ -11,11 +11,12 @@ class ModelCreate(BaseModel):
 
 
 class ModelUpdate(BaseModel):
-    name: str | None = None
-    slug: str | None = None
+    name: str | None = Field(default=None)
+    slug: str | None = Field(default=None)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 class ModelFilter(BaseModel):
