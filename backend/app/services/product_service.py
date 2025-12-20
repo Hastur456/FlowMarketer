@@ -4,4 +4,4 @@ from app.repositories.category_repository import CategoryRepository
 
 class ProductService:
     @classmethod
-    def get_all_
+    def 

@@ -16,6 +16,14 @@ class RunConfig(BaseModel):
     apo_port: str = 8000
 
 
+class ElasticSearchConfig(BaseModel):
+    ELASTICSEARCH_HOST: str = "localhost"
+    ELASTICSEARCH_PORT: int = 9200
+    ELASTICSEARCH_SCHEME: str = "http"
+    ELASTICSEARCH_TIMEOUT: int = 30
+
+
+
 class DatabaseConfig(BaseModel):
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -50,6 +58,7 @@ class Settings(BaseSettings):
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     )
 
+    es_config: ElasticSearchConfig = ElasticSearchConfig()
     logger_config: LoggerConfig = LoggerConfig()
     run: RunConfig = RunConfig()
     database: DatabaseConfig = DatabaseConfig()

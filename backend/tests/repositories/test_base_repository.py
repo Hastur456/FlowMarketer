@@ -1,7 +1,7 @@
 # tests/repositories/test_base_repository.py
 import pytest
 from pydantic import BaseModel, Field, ConfigDict
-from backend.app.repositories.postgres.base_repository import BaseRepository
+from app.repositories.base_repository import BaseRepository
 from app.models.test_model import ExecutableModel
 
 

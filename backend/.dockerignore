@@ -21,3 +21,4 @@ coverage.xml
 Dockerfile
 docker-compose.yml
 .dockerignore
+redis_data/
