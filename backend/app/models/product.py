@@ -19,30 +19,35 @@ class Product(Base):
     
     price = Column(Numeric(10, 2), nullable=False)
     discount_price = Column(Numeric(10, 2), nullable=True)
-    cost_price = Column(Numeric(10, 2), nullable=True)  # Себестоимость
+    cost_price = Column(Numeric(10, 2), nullable=True)  # Себестоимость (только в БД)
     
-    # Остаток
-    stock = Column(Integer, default=0, nullable=False)
-    reserved_stock = Column(Integer, default=0)  # Зарезервировано в заказах
+    # Остаток (stock -> stock_quantity для ES)
+    stock_quantity = Column(Integer, default=0, nullable=False)  # ← ПЕРЕИМЕНОВАНО
+    reserved_stock = Column(Integer, default=0)  # Зарезервировано в заказах (только в БД)
     sku = Column(String(100), unique=True, nullable=True, index=True)
     
-    # SEO и контент
+    # SEO и контент (только в БД, не индексируются в ES)
     meta_title = Column(String(255), nullable=True)
     meta_description = Column(Text, nullable=True)
-    tags = Column(String(500), nullable=True)  # JSON как строка или отдельная таблица
+    tags = Column(String(500), nullable=True)
     
-    # Изображения
+    # Изображения (только в БД, не индексируются в ES)
     image_url = Column(String(500), nullable=True)
-    gallery_urls = Column(Text, nullable=True)  # JSON
+    gallery_urls = Column(Text, nullable=True)
     
-    # Рейтинг
-    rating = Column(Float, default=0.0)
+    # Рейтинг (rating -> average_rating для ES)
+    average_rating = Column(Float, default=0.0)  # ← ПЕРЕИМЕНОВАНО
     review_count = Column(Integer, default=0)
     
     # Статусы
     is_active = Column(Boolean, default=True, index=True)
     is_featured = Column(Boolean, default=False)
     is_bestseller = Column(Boolean, default=False)
+    
+    # Метрики для ES
+    popularity_score = Column(Integer, default=0)  # ← ДОБАВЛЕНО
+    sales_count = Column(Integer, default=0)       # ← ДОБАВЛЕНО
+    view_count = Column(Integer, default=0)        # ← ДОБАВЛЕНО
     
     # Отношения
     category = relationship("Category", back_populates="products")
@@ -56,7 +61,12 @@ class Product(Base):
     @property
     def available_stock(self):
         """Доступный остаток"""
-        return self.stock - self.reserved_stock
+        return self.stock_quantity - self.reserved_stock  # ← ОБНОВЛЕНО
+    
+    @property
+    def is_available(self):
+        """Наличие товара (для ES is_available)"""
+        return bool(self.is_active and self.stock_quantity > 0)  # ← ДОБАВЛЕНО
     
     @property
     def discount_percent(self):

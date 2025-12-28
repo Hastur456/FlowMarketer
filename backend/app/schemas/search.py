@@ -1,101 +1,158 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional
-from decimal import Decimal
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
-from typing import List
 
-
-class ProductFilterRequest(BaseModel):
-    """Схема фильтра для товаров"""
-    
-    query: Optional[str] = Field(None, max_length=255, description="Поисковый запрос")
-    category_id: Optional[int] = Field(None, gt=0, description="ID категории")
-    min_price: Optional[Decimal] = Field(None, ge=0, description="Минимальная цена")
-    max_price: Optional[Decimal] = Field(None, ge=0, description="Максимальная цена")
-    min_rating: Optional[float] = Field(None, ge=0, le=5, description="Минимальный рейтинг")
-    is_featured: Optional[bool] = Field(None, description="Только избранные")
-    is_bestseller: Optional[bool] = Field(None, description="Только бестселлеры")
-    in_stock: Optional[bool] = Field(None, description="Только в наличии")
-    sort_by: Optional[str] = Field("created_at", regex=r"^(created_at|price|rating|name)$", description="Сортировка")
-    sort_order: Optional[str] = Field("desc", regex=r"^(asc|desc)$", description="Порядок")
-    skip: int = Field(0, ge=0, description="Пропустить")
-    limit: int = Field(20, ge=1, le=100, description="Лимит")
-
-
-class OrderFilterRequest(BaseModel):
-    """Схема фильтра для заказов"""
-    
-    status: Optional[str] = Field(None, description="Статус заказа")
-    date_from: Optional[str] = Field(None, description="Дата от (YYYY-MM-DD)")
-    date_to: Optional[str] = Field(None, description="Дата до (YYYY-MM-DD)")
-    min_amount: Optional[Decimal] = Field(None, ge=0, description="Минимальная сумма")
-    max_amount: Optional[Decimal] = Field(None, ge=0, description="Максимальная сумма")
-    sort_by: Optional[str] = Field("created_at", regex=r"^(created_at|total_price)$")
-    sort_order: Optional[str] = Field("desc", regex=r"^(asc|desc)$")
-    skip: int = Field(0, ge=0)
-    limit: int = Field(20, ge=1, le=100)
-
-
-class ProductSearchBase(BaseModel):
-    """Базовая схема для поиска продуктов"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: int
-    name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = Field(None, max_length=5000)
-    price: float = Field(..., gt=0)
-    category_id: int
-    category_name: str
-    sku: str
-    stock_quantity: int = Field(default=0, ge=0)
-    rating: float = Field(default=0.0, ge=0.0, le=5.0)
-    review_count: int = Field(default=0, ge=0)
-    image_url: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
-    status: str = "active"
-    
-    # Для полнотекстового поиска
-    search_text: Optional[str] = None
-
-class ProductSearchDocument(ProductSearchBase):
-    """Документ для Elasticsearch"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    # Дополнительные поля для ES
-    brand: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
-    popularity_score: float = Field(default=0.0, ge=0.0)
 
 class SearchQuery(BaseModel):
-    """Запрос поиска продуктов"""
-    query: str = Field(..., min_length=1, max_length=1000)
-    category_id: Optional[int] = None
-    min_price: Optional[float] = Field(None, ge=0)
-    max_price: Optional[float] = Field(None, ge=0)
-    min_rating: Optional[float] = Field(None, ge=0, le=5)
-    in_stock: bool = True
-    sort_by: str = Field("relevance", regex="^(relevance|price_asc|price_desc|rating|newest)$")
-    page: int = Field(1, ge=1)
-    page_size: int = Field(20, ge=1, le=100)
+    """Параметры для поиска товаров"""
+    
+    query: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=1000,
+        description="Поисковый запрос"
+    )
+    category_id: Optional[int] = Field(
+        None,
+        gt=0,
+        description="ID категории"
+    )
+    min_price: Optional[float] = Field(
+        None,
+        ge=0,
+        description="Минимальная цена"
+    )
+    max_price: Optional[float] = Field(
+        None,
+        ge=0,
+        description="Максимальная цена"
+    )
+    min_rating: Optional[float] = Field(
+        None,
+        ge=0,
+        le=5,
+        description="Минимальный рейтинг"
+    )
+    in_stock: bool = Field(
+        True,
+        description="Только товары в наличии"
+    )
+    sort_by: str = Field(
+        "relevance",
+        description="Метод сортировки"
+    )
+    page: int = Field(
+        1,
+        ge=1,
+        description="Номер страницы"
+    )
+    page_size: int = Field(
+        20,
+        ge=1,
+        le=100,
+        description="Размер страницы"
+    )
+    
+    @field_validator("sort_by")
+    @classmethod
+    def validate_sort_by(cls, v: str) -> str:
+        """Валидация параметра сортировки"""
+        allowed_sorts = {
+            "relevance", "price_asc", "price_desc",
+            "rating", "newest", "popular"
+        }
+        if v not in allowed_sorts:
+            raise ValueError(f"sort_by must be one of {allowed_sorts}")
+        return v
+    
+    @field_validator("max_price")
+    @classmethod
+    def validate_max_price(cls, v: float, info) -> float:
+        """Валидация максимальной цены"""
+        if v is not None and info.data.get("min_price"):
+            if v < info.data.get("min_price"):
+                raise ValueError("max_price must be >= min_price")
+        return v
+
+
+class ProductSearchDocument(BaseModel):
+    """
+    Документ товара из Elasticsearch.
+    СТРОГО соответствует ProductIndexConfig.MAPPINGS
+    """
+    
+    id: int
+    name: str
+    description: Optional[str] = None
+    price: float
+    discount_price: Optional[float] = None
+    stock_quantity: int  # ← WAS: stock (ИСПРАВЛЕНО)
+    sku: Optional[str] = None
+    category_id: int
+    category_name: str
+    average_rating: float = Field(ge=0.0, le=5.0)  # ← WAS: rating (ИСПРАВЛЕНО)
+    review_count: int = Field(ge=0)
+    is_active: bool
+    is_available: bool  # ← ДОБАВЛЕНО (вычисляется из is_active + stock_quantity)
+    is_featured: bool
+    is_bestseller: bool
+    created_at: datetime
+    updated_at: datetime
+    search_text: str
+    popularity_score: int = Field(ge=0)  # ← ДОБАВЛЕНО
+    sales_count: int = Field(ge=0)       # ← ДОБАВЛЕНО
+    view_count: int = Field(ge=0)        # ← ДОБАВЛЕНО
+
 
 class SearchResult(BaseModel):
-    """Результат поиска"""
-    total: int
-    page: int
-    page_size: int
-    total_pages: int
-    results: List[ProductSearchDocument]
-    aggregations: Optional[dict] = None
-    took_ms: int  # Время выполнения
+    """Результат поиска с метаданными"""
+    
+    total: int = Field(ge=0, description="Общее количество результатов")
+    page: int = Field(ge=1, description="Текущая страница")
+    page_size: int = Field(ge=1, description="Размер страницы")
+    total_pages: int = Field(ge=0, description="Всего страниц")
+    results: List[ProductSearchDocument] = Field(
+        default_factory=list,
+        description="Список товаров"
+    )
+    aggregations: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Агрегации (фасеты)"
+    )
+    took_ms: int = Field(ge=0, description="Время выполнения в миллисекундах")
+
 
 class AutocompleteQuery(BaseModel):
-    """Запрос автодополнения"""
-    prefix: str = Field(..., min_length=1, max_length=100)
-    limit: int = Field(10, ge=1, le=50)
-    category_id: Optional[int] = None
+    """Запрос для автодополнения"""
+    
+    prefix: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Префикс для автодополнения"
+    )
+    limit: int = Field(
+        10,
+        ge=1,
+        le=50,
+        description="Максимальное количество подсказок"
+    )
+    category_id: Optional[int] = Field(
+        None,
+        gt=0,
+        description="Ограничить поиск категорией"
+    )
+
 
 class AutocompleteResult(BaseModel):
     """Результат автодополнения"""
-    suggestions: List[str]
-    took_ms: int
+    
+    suggestions: List[str] = Field(
+        default_factory=list,
+        description="Список подсказок"
+    )
+    took_ms: int = Field(
+        default=0,
+        ge=0,
+        description="Время выполнения в миллисекундах"
+    )

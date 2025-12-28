@@ -1,64 +1,31 @@
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ConnectionError
+"""Асинхронный клиент Elasticsearch."""
+
+from typing import Optional
+from elasticsearch import AsyncElasticsearch
 from app.config import settings
-from app.utils.logger import logger
+
+es_config = settings.es_config
 
 
-class ElasticsearchClient:
-    """Singleton для подключения к Elasticsearch"""
+class ESClient:
+    """Singleton для асинхронной работы с Elasticsearch."""
     
-    _instance = None
-    _client: Elasticsearch = None
+    _instance: AsyncElasticsearch|None = None
     
-    def __new__(cls):
+    @classmethod
+    async def get_client(cls) -> AsyncElasticsearch:
+        """Получить или создать async клиент."""
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
+            cls._instance = AsyncElasticsearch(
+                hosts=[es_config.ELASTICSEARCH_HOST],
+                verify_certs=False,
+                ssl_show_warn=False,
+            )
         return cls._instance
     
-    def __init__(self):
-        if self._client is None:
-            self._connect()
-    
-    def _connect(self):
-        """Инициализация подключения"""
-        try:
-            es_url = f"{settings.es_config.ELASTICSEARCH_SCHEME}://{settings.es_config.ELASTICSEARCH_HOST}:{settings.es_config.ELASTICSEARCH_PORT}"
-            
-            self._client = Elasticsearch(
-                hosts=[es_url],
-                timeout=settings.es_config.ELASTICSEARCH_TIMEOUT,
-                max_retries=3,
-                retry_on_timeout=True,
-                verify_certs=False,  # Для development
-                request_timeout=30
-            )
-            
-            info = self._client.info()
-            logger.info(f"✓ Elasticsearch {info['version']['number']} подключен")
-            
-        except ConnectionError as e:
-            logger.error(f"✗ Ошибка подключения Elasticsearch: {e}")
-            raise
-    
-    @property
-    def client(self) -> Elasticsearch:
-        if self._client is None:
-            self._connect()
-        return self._client
-    
-    def health_check(self) -> dict:
-        """Проверка здоровья кластера"""
-        try:
-            return self._client.cluster.health()
-        except Exception as e:
-            logger.error(f"Health check failed: {e}")
-            raise
-    
-    def close(self):
-        """Закрытие подключения"""
-        if self._client:
-            self._client.close()
-            self._client = None
-
-# Глобальный экземпляр
-es_client = ElasticsearchClient()
+    @classmethod
+    async def close(cls) -> None:
+        """Закрыть соединение."""
+        if cls._instance:
+            await cls._instance.close()
+            cls._instance = None

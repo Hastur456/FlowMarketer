@@ -22,6 +22,17 @@ class ElasticSearchConfig(BaseModel):
     ELASTICSEARCH_SCHEME: str = "http"
     ELASTICSEARCH_TIMEOUT: int = 30
 
+    # ELASTICSEARCH_URL: str = Field(default="https://es.example.com:9200")
+    # ELASTICSEARCH_CA_CERTS: str = Field(default="/etc/ssl/certs/http_ca.crt")
+
+    # # Рекомендуется API key (или basic_auth, если у вас так принято)
+    # ELASTICSEARCH_API_KEY: str | None = None
+    # ELASTICSEARCH_USER: str | None = None
+    # ELASTICSEARCH_PASSWORD: str | None = None
+
+    # ELASTICSEARCH_REQUEST_TIMEOUT: int = 10
+    # ELASTICSEARCH_MAX_RETRIES: int = 5
+    # ELASTICSEARCH_RETRY_ON_TIMEOUT: bool = True
 
 
 class DatabaseConfig(BaseModel):

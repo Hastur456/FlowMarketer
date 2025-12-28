@@ -1,9 +1,8 @@
-# backend/app/schemas/product.py
-
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional, List
 from decimal import Decimal
+
 
 class ProductCreateRequest(BaseModel):
     """Схема для создания товара"""
@@ -17,7 +16,7 @@ class ProductCreateRequest(BaseModel):
     discount_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2, description="Цена со скидкой")
     cost_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2, description="Себестоимость")
     
-    stock: int = Field(0, ge=0, description="Остаток товара")
+    stock_quantity: int = Field(0, ge=0, description="Остаток товара")  # ← WAS: stock (ИСПРАВЛЕНО)
     sku: Optional[str] = Field(None, max_length=100, description="SKU товара")
     
     meta_title: Optional[str] = Field(None, max_length=255)
@@ -30,10 +29,11 @@ class ProductCreateRequest(BaseModel):
     is_featured: bool = Field(False, description="Избранный товар")
     is_bestseller: bool = Field(False, description="Бестселлер")
     
-    @validator('discount_price')
-    def discount_less_than_price(cls, v, values):
-        if v is not None and 'price' in values:
-            if v >= values['price']:
+    @field_validator('discount_price')
+    @classmethod
+    def discount_less_than_price(cls, v, info):
+        if v is not None and 'price' in info.data:
+            if v >= info.data['price']:
                 raise ValueError('Цена со скидкой должна быть меньше основной цены')
         return v
 
@@ -49,7 +49,7 @@ class ProductUpdateRequest(BaseModel):
     discount_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     cost_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     
-    stock: Optional[int] = Field(None, ge=0)
+    stock_quantity: Optional[int] = Field(None, ge=0)  # ← WAS: stock (ИСПРАВЛЕНО)
     
     image_url: Optional[str] = Field(None, max_length=500)
     gallery_urls: Optional[List[str]] = Field(None)
@@ -68,10 +68,10 @@ class ProductResponse(BaseModel):
     category_id: int
     price: Decimal
     discount_price: Optional[Decimal]
-    stock: int
+    stock_quantity: int  # ← WAS: stock (ИСПРАВЛЕНО)
     sku: Optional[str]
     image_url: Optional[str]
-    rating: float
+    average_rating: float  # ← WAS: rating (ИСПРАВЛЕНО)
     review_count: int
     is_active: bool
     is_featured: bool
@@ -92,8 +92,19 @@ class ProductDetailResponse(ProductResponse):
     meta_description: Optional[str]
     tags: Optional[str]
     updated_at: datetime
-    available_stock: int
-    discount_percent: float
+    
+    @property
+    def available_stock(self) -> int:
+        """Доступный остаток (вычисляется от stock_quantity - reserved_stock)"""
+        # Примечание: reserved_stock не передаётся в схеме, вычисляется в БД
+        return self.stock_quantity
+    
+    @property
+    def discount_percent(self) -> float:
+        """Процент скидки"""
+        if self.discount_price and self.price:
+            return ((float(self.price) - float(self.discount_price)) / float(self.price)) * 100
+        return 0
 
 
 class ProductListResponse(BaseModel):
