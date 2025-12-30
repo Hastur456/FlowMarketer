@@ -1,7 +1,7 @@
 from logging import Logger
 from typing import Any, Dict, List
 
-from app.elasticsearch.client import ESClient
+from app.elasticsearch.client import ElasticsearchClient
 from app.elasticsearch.indexers.product_indexer import ProductIndexer
 from app.elasticsearch.searchers.product_searcher import ProductSearcher
 from app.elasticsearch.mappers.product_mapper import ProductMapper, ProductSource
@@ -22,7 +22,7 @@ class ProductService:
     async def _ensure_initialized(self) -> None:
         """Инициализировать компоненты (если ещё не инициализированы)."""
         if self._es_client is None:
-            self._es_client = await ESClient.get_client()
+            self._es_client = await ElasticsearchClient.connect()
             self._indexer = ProductIndexer(self._es_client, self.logger)
             self._searcher = ProductSearcher(self._es_client, self.logger)
     
@@ -100,4 +100,4 @@ class ProductService:
     
     async def close(self) -> None:
         """Закрыть соединение с ES."""
-        await ESClient.close()
+        await ElasticsearchClient.close()

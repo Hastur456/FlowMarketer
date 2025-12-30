@@ -1,20 +1,18 @@
 from fastapi import Request
 
-
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from elasticsearch.exceptions import TransportError
-from app.elasticsearch.client import ESClient
+from app.elasticsearch.client import ElasticsearchClient, es_config
 
 
 @asynccontextmanager
 async def es_lifespan(app: FastAPI):
+    es_client = ElasticsearchClient(config=es_config)
+
     try:
-        client = await ESClient().get_client()
-        app.state.es_client = client
-        info = await app.state.es_client.info()
-        es_version = info.get('version', {}).get('number', 'unknown')
-        print(f"✅ [Elasticsearch] Connected (v{es_version})")
+        await es_client.connect()
+        app.state.es_client = es_client
     except TransportError as e:
         print("Elastic search exception: {}".format(e))
         raise
@@ -26,7 +24,7 @@ async def es_lifespan(app: FastAPI):
     
     finally:
         try:
-            await app.state.es_client.close()
+            await app.state.es_client.disconnect()
             print("Sessin is closed")
         except Exception as e:
             print("Elasticsearch error {}".format(e))

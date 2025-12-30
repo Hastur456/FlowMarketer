@@ -21,6 +21,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  fastapi:
+    build: .
+    develop:
+      watch:
+        - action: sync
+          path: ./        # Что отслеживать локально
+          target: /app    # Куда синхронизировать в контейнере
+          ignore:
+            - venv/
+        - action: rebuild
+          path: requirements.txt # Пересобрать образ при изменении зависимостей
+
   redis:
     image: redis:latest
     restart: always
