@@ -1,9 +1,12 @@
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from app.database.engine import engine
 from functools import wraps
 from typing import Optional
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from app.config import database_url
 
 
+engine = create_async_engine(url=database_url)
 session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 _test_session_maker: async_sessionmaker | None = None

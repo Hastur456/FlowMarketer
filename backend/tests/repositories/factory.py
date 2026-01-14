@@ -2,7 +2,7 @@
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
 from faker import Faker
-from tests.conftest import db_session
+from backend.tests.repositories.conftest import db_session
 
 import pytest
 

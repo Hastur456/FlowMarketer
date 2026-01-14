@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
-from backend.app.repositories.base_repository import BaseRepository
+from backend.app.database.repositories.base_repository import BaseRepository
 from app.models.order import Order
 from database.session import connection
 from app.utils.logger import logger
