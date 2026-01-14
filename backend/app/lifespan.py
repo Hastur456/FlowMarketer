@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager, AsyncExitStack
 from fastapi import FastAPI
 
-from app.dependencies.es_depends import es_lifespan
+from app.elasticsearch.lifespan import es_lifespan
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with AsyncExitStack as stack:
+    async with AsyncExitStack() as stack:
         await stack.enter_async_context(es_lifespan(app))
 
         yield

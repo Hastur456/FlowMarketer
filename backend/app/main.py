@@ -10,7 +10,6 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# CORS для фронтенда
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.run.cors_origins,

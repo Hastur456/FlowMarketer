@@ -1,35 +1,17 @@
-from fastapi import Request
+from fastapi import Depends, Request
+from elasticsearch import AsyncElasticsearch
+from logging import Logger
 
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from elasticsearch.exceptions import TransportError
-from app.elasticsearch.client import ElasticsearchClient, es_config
-
-
-@asynccontextmanager
-async def es_lifespan(app: FastAPI):
-    es_client = ElasticsearchClient(config=es_config)
-
-    try:
-        await es_client.connect()
-        app.state.es_client = es_client
-    except TransportError as e:
-        print("Elastic search exception: {}".format(e))
-        raise
-
-    try: 
-        yield
-    except Exception as e:
-        raise e
-    
-    finally:
-        try:
-            await app.state.es_client.disconnect()
-            print("Sessin is closed")
-        except Exception as e:
-            print("Elasticsearch error {}".format(e))
-
+from app.services.product_service import ProductService
+from backend.app.utils.logger import get_logger
 
 
 async def get_es_client(request: Request):
     return request.app.state.es_client
+
+
+def get_product_service(
+    es: AsyncElasticsearch = Depends(get_es_client),
+    logger: Logger = Depends(get_logger),
+) -> ProductService:
+    return ProductService(es, logger)

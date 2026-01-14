@@ -23,15 +23,28 @@ services:
 
   fastapi:
     build: .
+    container_name: backend_fastapi
     develop:
       watch:
         - action: sync
-          path: ./        # Что отслеживать локально
-          target: /app    # Куда синхронизировать в контейнере
+          path: ./        
+          target: /app    
           ignore:
             - venv/
         - action: rebuild
-          path: requirements.txt # Пересобрать образ при изменении зависимостей
+          path: requirements.txt
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app 
+    environment:
+      - PYTHONUNBUFFERED=1  # Для корректных выводов логов в реальном времени
+    networks:
+      - backend_network
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
 
   redis:
     image: redis:latest
@@ -40,6 +53,8 @@ services:
       - '6379:6379'
     volumes:
       - ./redis_data:/data
+    networks:
+      - backend_network
 
 volumes:
   postgres_data:
