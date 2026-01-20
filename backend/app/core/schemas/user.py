@@ -4,6 +4,27 @@ from pydantic import BaseModel, EmailStr, Field, validator
 from datetime import datetime
 from typing import Optional, List
 from enum import Enum
+from fastapi_users import schemas
+from uuid import UUID
+
+
+class UserRead(schemas.BaseUser[UUID]):
+    pass
+
+
+class UserCreate(schemas.BaseUserCreate):
+    pass
+
+
+class UserUpdate(schemas.BaseUserUpdate):
+    pass
+
+
+class UserRegisteredNotification(BaseModel):
+    user: UserRead
+    ts: int
+
+
 
 class UserRegisterRequest(BaseModel):
     """Схема для регистрации"""
@@ -12,7 +33,7 @@ class UserRegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, description="Пароль минимум 8 символов")
     first_name: str = Field(..., min_length=2, max_length=100, description="Имя")
     last_name: str = Field(..., min_length=2, max_length=100, description="Фамилия")
-    phone: Optional[str] = Field(None, regex=r"^\+?[0-9\-\s\(\)]{10,}$", description="Номер телефона")
+    phone: Optional[str] = Field(None, pattern=r"^\+?[0-9\-\s\(\)]{10,}$", description="Номер телефона")
     
     @validator('password')
     def password_valid(cls, v):
@@ -38,10 +59,10 @@ class UserUpdateRequest(BaseModel):
     
     first_name: Optional[str] = Field(None, min_length=2, max_length=100)
     last_name: Optional[str] = Field(None, min_length=2, max_length=100)
-    phone: Optional[str] = Field(None, regex=r"^\+?[0-9\-\s\(\)]{10,}$")
+    phone: Optional[str] = Field(None, pattern=r"^\+?[0-9\-\s\(\)]{10,}$")
     avatar_url: Optional[str] = Field(None, max_length=500)
     bio: Optional[str] = Field(None, max_length=500)
-    preferred_language: str = Field('ru', regex=r"^(ru|en)$")
+    preferred_language: str = Field('ru', pattern=r"^(ru|en)$")
 
 
 class UserPasswordChangeRequest(BaseModel):
@@ -134,10 +155,12 @@ class TwoFactorEnableRequest(BaseModel):
 class TwoFactorVerifyRequest(BaseModel):
     """Схема для проверки 2FA кода"""
     
-    code: str = Field(..., regex=r"^\d{6}$", description="6-значный код")
+    code: str = Field(..., pattern=r"^\d{6}$", description="6-значный код")
 
 
 class ResendVerificationEmailRequest(BaseModel):
     """Схема для повторной отправки верификации"""
     
     email: EmailStr = Field(..., description="Email адрес")
+
+

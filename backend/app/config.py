@@ -13,7 +13,7 @@ class RunConfig(BaseModel):
     ]
 
     app_host: str = "localhost"
-    apo_port: str = 8000
+    app_port: str = 8000
 
 
 class ElasticSearchConfig(BaseSettings):
@@ -133,5 +133,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-database_url = settings.database.get_url()
+database_url = settings.database.get_url(test_mode=True)
 

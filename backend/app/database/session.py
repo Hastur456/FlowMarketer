@@ -1,7 +1,7 @@
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 from functools import wraps
-from typing import Optional
-from sqlalchemy.ext.asyncio import create_async_engine
+from typing import Optional, AsyncGenerator
 
 from app.config import database_url
 
@@ -10,6 +10,19 @@ engine = create_async_engine(url=database_url)
 session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 _test_session_maker: async_sessionmaker | None = None
+
+
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with session_maker() as session:
+        try:
+            yield session
+
+        except Exception:
+            await session.rollback()
+            raise
+
+        finally:
+            await session.close()
 
 
 def connection(commit: bool = False):

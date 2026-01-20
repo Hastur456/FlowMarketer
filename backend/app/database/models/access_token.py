@@ -16,20 +16,19 @@ from sqlalchemy.orm import (
     mapped_column
 )
 from .base import Base
-from database.session import connection
+from app.database.session import connection, get_session
 
 
-
-class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):  
+class AccessToken(Base, SQLAlchemyBaseAccessTokenTableUUID):  
     user_id: Mapped[UUID] = mapped_column(
         UUID, 
         ForeignKey("users.id", ondelete="cascade"), 
         nullable=False,
     )
 
-
-@connection(commit=False)
-async def get_access_token_db(
-    session: AsyncSession
-):  
-    yield SQLAlchemyAccessTokenDatabase(session, AccessToken)
+    @connection()
+    def get_db(
+        cls,
+        session: AsyncSession
+    ):  
+        return SQLAlchemyAccessTokenDatabase(session, AccessToken)

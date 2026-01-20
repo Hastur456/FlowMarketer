@@ -3,4 +3,4 @@ import subprocess
 
 
 if __name__ == "__main__":
-    subprocess.run(["uvicorn", "app.main:app", "--host", f"{settings.run.db_host}", "--port", f"{settings.run.db_port}"])
+    subprocess.run(["uvicorn", "app.main:app", "--host", f"{settings.run.app_host}", "--port", f"{settings.run.app_port}"])

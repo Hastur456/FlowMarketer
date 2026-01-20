@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager, AsyncExitStack
 from fastapi import FastAPI
 
-from app.elasticsearch.lifespan import es_lifespan
+from app.core.elasticsearch.lifespan import es_lifespan
 
 
 @asynccontextmanager

@@ -2,10 +2,10 @@ from logging import Logger
 from typing import Any, Dict, List
 from elasticsearch import AsyncElasticsearch
 
-from app.elasticsearch.client import ElasticsearchClient
-from app.elasticsearch.indexers.product_indexer import ProductIndexer
-from app.elasticsearch.searchers.product_searcher import ProductSearcher
-from app.elasticsearch.mappers.product_mapper import ProductMapper, ProductSource
+from app.core.elasticsearch.client import ElasticsearchClient
+from app.core.elasticsearch.indexers.product_indexer import ProductIndexer
+from app.core.elasticsearch.searchers.product_searcher import ProductSearcher
+from app.core.elasticsearch.mappers.product_mapper import ProductMapper, ProductSource
 
 
 class ProductService:
