@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, DateTime, T
 from sqlalchemy.orm import relationship
 from enum import Enum
 from datetime import datetime
-from .base import Base
+from app.database.models.base import Base
 
 
 class OrderStatus(str, Enum):

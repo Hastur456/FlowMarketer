@@ -133,5 +133,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-database_url = settings.database.get_url(test_mode=True)
-
+database_url = settings.database.get_url()

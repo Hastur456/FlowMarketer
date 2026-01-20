@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Index
 from sqlalchemy.orm import relationship
-from .base import Base
+from app.database.models.base import Base
 
 
 class UserAddress(Base):

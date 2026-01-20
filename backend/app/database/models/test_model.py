@@ -1,4 +1,4 @@
-from .base import Base 
+from app.database.models.base import Base 
 from sqlalchemy import Column
 from sqlalchemy.types import String
 

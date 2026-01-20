@@ -2,7 +2,11 @@ import os
 import importlib.util
 import inspect
 
+from .base import Base
+
 CLASSES = {}
+
+__all__ = [Base]
 
 for filename in os.listdir(os.path.dirname(__file__)):
     if filename.endswith(".py") and filename != "__init__.py":

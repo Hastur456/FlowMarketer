@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from datetime import datetime
 from uuid import UUID
-from .base import Base
+from app.database.models.base import Base
 from app.database.session import get_session
 from app.database.models.access_token import AccessToken
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID

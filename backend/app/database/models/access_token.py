@@ -26,7 +26,6 @@ class AccessToken(Base, SQLAlchemyBaseAccessTokenTableUUID):
         nullable=False,
     )
 
-    @connection()
     def get_db(
         cls,
         session: AsyncSession
