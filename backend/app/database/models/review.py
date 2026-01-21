@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Text, Index, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import UUID as SA_UUID
 from app.database.models.base import Base
 
 
@@ -10,8 +11,8 @@ class Review(Base):
         Index('idx_reviews_user_id', 'user_id'),
     )
     
-    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    product_id = Column(SA_UUID, ForeignKey('products.id'), nullable=False)
+    user_id = Column(SA_UUID, ForeignKey('users.id'), nullable=False)
     
     rating = Column(Integer, nullable=False)  # 1-5
     title = Column(String(255), nullable=True)

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, Index
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import UUID as SA_UUID
 from app.database.models.base import Base
 
 
@@ -10,8 +11,8 @@ class OrderItem(Base):
         Index('idx_order_items_product_id', 'product_id'),
     )
     
-    order_id = Column(Integer, ForeignKey('orders.id'), nullable=False)
-    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    order_id = Column(SA_UUID, ForeignKey('orders.id'), nullable=False)
+    product_id = Column(SA_UUID, ForeignKey('products.id'), nullable=False)
     
     # Информация о товаре в момент заказа
     product_name = Column(String(255), nullable=False)

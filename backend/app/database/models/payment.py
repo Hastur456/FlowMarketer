@@ -1,26 +1,31 @@
-from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, DateTime, Text, Enum as SQLEnum, Index
+from sqlalchemy import (
+    Column, String, Numeric, ForeignKey, DateTime, Text, Index
+)
 from sqlalchemy.orm import relationship
-from enum import Enum
-from datetime import datetime
+from sqlalchemy.types import UUID as SA_UUID
+from sqlalchemy.dialects.postgresql import ENUM
+from enum import StrEnum
 from app.database.models.base import Base
 
 
-class PaymentMethod(str, Enum):
-    CARD = "card"                 # Карта (Yandex.Kassa, etc)
-    YANDEX_KASSA = "yandex_kassa" # Яндекс.Касса
-    SBERBANK = "sberbank"         # СберБанк онлайн
-    QIWI = "qiwi"                 # QIWI
-    PAYPAL = "paypal"             # PayPal (если работают с миром)
-    BANK_TRANSFER = "bank_transfer" # Банковский переводы
-    INVOICE = "invoice"           # Счёт для физ.лиц
+class PaymentMethod(StrEnum):
+    CARD = "card"
+    YANDEX_KASSA = "yandex_kassa"
+    SBERBANK = "sberbank"
+    QIWI = "qiwi"
+    PAYPAL = "paypal"
+    BANK_TRANSFER = "bank_transfer"
+    INVOICE = "invoice"
 
-class PaymentStatus(str, Enum):
-    PENDING = "pending"           # Ожидание
-    PROCESSING = "processing"     # В обработке
-    COMPLETED = "completed"       # Завершено
-    FAILED = "failed"             # Ошибка
-    CANCELLED = "cancelled"       # Отменено
-    REFUNDED = "refunded"         # Возвращено
+
+class PaymentStatus(StrEnum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    REFUNDED = "refunded"
+
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -30,44 +35,62 @@ class Payment(Base):
         Index('idx_payments_status', 'status'),
         Index('idx_payments_created_at', 'created_at'),
     )
-    
-    order_id = Column(Integer, ForeignKey('orders.id'), nullable=False, unique=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    
-    # Метод и статус
-    method = Column(SQLEnum(PaymentMethod), nullable=False)
-    status = Column(SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False)
-    
-    # Сумма
+
+    order_id = Column(
+        SA_UUID,
+        ForeignKey('orders.id'),
+        nullable=False,
+        unique=True
+    )
+    user_id = Column(SA_UUID, ForeignKey('users.id'), nullable=False)
+
+    # ENUM WITHOUT creating type in models
+    method = Column(
+        ENUM(
+            *[m.value for m in PaymentMethod],
+            name="paymentmethod",
+            create_type=False,
+            drop_type=False
+        ),
+        nullable=False
+    )
+
+    status = Column(
+        ENUM(
+            *[s.value for s in PaymentStatus],
+            name="paymentstatus",
+            create_type=False,
+            drop_type=False
+        ),
+        nullable=False,
+        default=PaymentStatus.PENDING
+    )
+
     amount = Column(Numeric(10, 2), nullable=False)
-    currency = Column(String(3), default='RUB', nullable=False)
-    
-    # ID платежа в платёжной системе
-    transaction_id = Column(String(255), unique=True, nullable=True, index=True)
-    receipt_number = Column(String(255), nullable=True)  # Номер чека
-    
-    # 3D Secure и доп. информация
-    card_last_four = Column(String(4), nullable=True)
-    card_brand = Column(String(50), nullable=True)  # Visa, MasterCard и т.д.
-    
-    # Фискальные данные (для России)
-    fiscal_receipt_id = Column(String(255), nullable=True)
-    fiscal_receipt_url = Column(String(500), nullable=True)
-    
-    # Возврат
+    currency = Column(String(3), nullable=False, default="RUB")
+
+    transaction_id = Column(String(255), unique=True, index=True)
+    receipt_number = Column(String(255))
+
+    card_last_four = Column(String(4))
+    card_brand = Column(String(50))
+
+    fiscal_receipt_id = Column(String(255))
+    fiscal_receipt_url = Column(String(500))
+
     refund_amount = Column(Numeric(10, 2), default=0)
-    refunded_at = Column(DateTime, nullable=True)
-    
-    # Ошибка (если статус FAILED)
-    error_message = Column(Text, nullable=True)
-    error_code = Column(String(50), nullable=True)
-    
-    # Дополнительная информация
-    metadata = Column(Text, nullable=True)  # JSON
-    
-    # Отношения
+    refunded_at = Column(DateTime)
+
+    error_message = Column(Text)
+    error_code = Column(String(50))
+
+    payment_metadata = Column(Text)
+
     order = relationship("Order", back_populates="payment")
     user = relationship("User", back_populates="payments")
-    
+
     def __repr__(self):
-        return f"<Payment(id={self.id}, order_id={self.order_id}, status={self.status}, amount={self.amount})>"
+        return (
+            f"<Payment(id={self.id}, order_id={self.order_id}, "
+            f"status={self.status}, amount={self.amount})>"
+        )

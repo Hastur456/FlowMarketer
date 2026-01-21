@@ -8,7 +8,7 @@ bearretransport = BearerTransport(
     tokenUrl="auth/jwt/login"
 )
 
-cookietransport = CookieTransport(
+cookie_transport = CookieTransport(
     cookie_name="access_token",
     cookie_max_age=3600,
     cookie_secure=True,

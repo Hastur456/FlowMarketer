@@ -7,25 +7,34 @@ from fastapi_users_db_sqlalchemy.access_token import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import (
-    UUID,
     ForeignKey
 )
 from sqlalchemy.orm import (
     Mapped,
     DeclarativeBase, 
-    mapped_column
+    mapped_column,
+    relationship
 )
-from .base import Base
-from app.database.session import connection, get_session
+from sqlalchemy.types import UUID as SA_UUID
+from app.database.models.base import Base
+from uuid import UUID
 
 
 class AccessToken(Base, SQLAlchemyBaseAccessTokenTableUUID):  
+    __table_args__ = {'extend_existing': True}
+
     user_id: Mapped[UUID] = mapped_column(
-        UUID, 
+        SA_UUID, 
         ForeignKey("users.id", ondelete="cascade"), 
         nullable=False,
     )
+    
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="access_tokens"
+    )
 
+    @classmethod
     def get_db(
         cls,
         session: AsyncSession

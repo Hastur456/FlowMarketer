@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, ForeignKey, Index
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import UUID as SA_UUID
 from app.database.models.base import Base
+
 
 
 class CartItem(Base):
@@ -11,8 +13,8 @@ class CartItem(Base):
         Index('idx_cart_items_user_product', 'user_id', 'product_id', unique=True),
     )
     
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    user_id = Column(SA_UUID, ForeignKey('users.id'), nullable=False)
+    product_id = Column(SA_UUID, ForeignKey('products.id'), nullable=False)
     quantity = Column(Integer, default=1, nullable=False)
     
     # Отношения

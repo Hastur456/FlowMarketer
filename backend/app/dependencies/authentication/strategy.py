@@ -12,6 +12,6 @@ def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_tokens_db),
 ) -> DatabaseStrategy:
     return DatabaseStrategy(
-        access_token_db, # Передаем полученную через Depends базу
-        lifetime_seconds=3600 # Увеличьте, 360 сек — это очень мало (6 мин)
+        access_token_db,
+        lifetime_seconds=3600
     )

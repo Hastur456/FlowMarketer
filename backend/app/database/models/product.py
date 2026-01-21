@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, Numeric, Integer, Boolean, ForeignKey, Index, Float
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import UUID as SA_UUID
 from app.database.models.base import Base
 
 
@@ -15,7 +16,7 @@ class Product(Base):
     name = Column(String(255), nullable=False, index=True)
     slug = Column(String(255), nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
-    category_id = Column(Integer, ForeignKey('categories.id'), nullable=False)
+    category_id = Column(SA_UUID(as_uuid=True), ForeignKey('categories.id'), nullable=False)
     
     price = Column(Numeric(10, 2), nullable=False)
     discount_price = Column(Numeric(10, 2), nullable=True)

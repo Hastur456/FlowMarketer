@@ -1,6 +1,5 @@
-# backend/app/schemas/user.py
-
 from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic_extra_types.phone_numbers import PhoneNumber
 from datetime import datetime
 from typing import Optional, List
 from enum import Enum
@@ -9,15 +8,21 @@ from uuid import UUID
 
 
 class UserRead(schemas.BaseUser[UUID]):
-    pass
+    first_name: str|None = Field(default=None, max_length=100)
+    last_name: str|None = Field(default=None, max_length=100)
+    phone: PhoneNumber|None = Field(default=None)
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    first_name: str|None = Field(default=None, max_length=100)
+    last_name: str|None = Field(default=None, max_length=100)
+    phone: PhoneNumber|None = Field(default=None)
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    first_name: str|None = Field(default=None, max_length=100)
+    last_name: str|None = Field(default=None, max_length=100)
+    phone: PhoneNumber|None = Field(default=None)
 
 
 class UserRegisteredNotification(BaseModel):
@@ -25,10 +30,7 @@ class UserRegisteredNotification(BaseModel):
     ts: int
 
 
-
 class UserRegisterRequest(BaseModel):
-    """Схема для регистрации"""
-    
     email: EmailStr = Field(..., description="Email адрес пользователя")
     password: str = Field(..., min_length=8, description="Пароль минимум 8 символов")
     first_name: str = Field(..., min_length=2, max_length=100, description="Имя")

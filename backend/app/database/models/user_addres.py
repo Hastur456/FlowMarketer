@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Index
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import UUID as SA_UUID
 from app.database.models.base import Base
 
 
@@ -9,7 +10,7 @@ class UserAddress(Base):
         Index('idx_user_addresses_user_id', 'user_id'),
     )
     
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(SA_UUID, ForeignKey('users.id'), nullable=False)
     
     # Адрес
     country = Column(String(100), default='Russia', nullable=False)

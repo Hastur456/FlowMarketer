@@ -2,6 +2,9 @@ import os
 from typing import Union, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, Field, field_validator, computed_field
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class RunConfig(BaseModel):
@@ -92,9 +95,11 @@ class ElasticSearchConfig(BaseSettings):
 
 
 
-class DatabaseConfig(BaseModel):
+class DatabaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+        env_file=os.path.join(os.getcwd(), ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore"
     )
 
     DB_USER: str | None = Field(default=None, description="Database username")
@@ -105,12 +110,12 @@ class DatabaseConfig(BaseModel):
 
     TEST_DB_URL: str = "sqlite+aiosqlite:///:memory:"
 
-    def get_url(self, test_mode: bool = True):
+    def get_url(self, test_mode: bool = False):
         if test_mode:
             return self.TEST_DB_URL
         
         if all([self.DB_USER, self.DB_PASSWORD, self.DB_HOST, self.DB_NAME, self.DB_PORT]):
-            return "postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         
         return self.TEST_DB_URL
 
@@ -134,3 +139,4 @@ class Settings(BaseSettings):
 
 settings = Settings()
 database_url = settings.database.get_url()
+print(database_url)
