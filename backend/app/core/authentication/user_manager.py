@@ -2,9 +2,12 @@ import uuid
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin
+from fastapi_users.authentication.strategy import DatabaseStrategy
 
 from app.database.models.user import User
 from app.database.session import get_session
+from app.dependencies.authentication.backend import authentication_backend
+from app.dependencies.authentication.strategy import get_database_strategy
 
 SECRET = "SECRET"
 
@@ -12,7 +15,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
 
-    async def on_after_register(self, user: User, request=None):
+    async def on_after_register(self, user: User, reques=None):
         print(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(self, user: User, token: str, request=None):

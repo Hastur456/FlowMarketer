@@ -8,8 +8,8 @@ from typing import Any, Dict, List
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ApiError
 
-from app.elasticsearch.indices.product_index import ProductIndexConfig
-from app.elasticsearch.mappers.product_mapper import ProductMapper, ProductESDocument
+from app.core.elasticsearch.indices.product_index import ProductIndexConfig
+from app.core.elasticsearch.mappers.product_mapper import ProductMapper, ProductESDocument
 
 
 class ProductSearcher:

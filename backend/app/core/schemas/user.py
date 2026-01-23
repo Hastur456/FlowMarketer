@@ -16,13 +16,13 @@ class UserRead(schemas.BaseUser[UUID]):
 class UserCreate(schemas.BaseUserCreate):
     first_name: str|None = Field(default=None, max_length=100)
     last_name: str|None = Field(default=None, max_length=100)
-    phone: PhoneNumber|None = Field(default=None)
+    phone: PhoneNumber|None = Field(default=None, examples=["+79000000000", "+447700900123"])
 
 
 class UserUpdate(schemas.BaseUserUpdate):
     first_name: str|None = Field(default=None, max_length=100)
     last_name: str|None = Field(default=None, max_length=100)
-    phone: PhoneNumber|None = Field(default=None)
+    phone: PhoneNumber|None = Field(default=None, examples=["+79000000000", "+447700900123"])
 
 
 class UserRegisteredNotification(BaseModel):

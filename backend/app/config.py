@@ -79,7 +79,6 @@ class ElasticSearchConfig(BaseSettings):
             "retry_on_timeout": self.retry_on_timeout,
             "verify_certs": self.verify_certs,
             "ssl_show_warn": self.ssl_show_warn,
-            "maxsize": self.max_connections,
             "connections_per_node": self.connections_per_node,
         }
         
@@ -139,4 +138,3 @@ class Settings(BaseSettings):
 
 settings = Settings()
 database_url = settings.database.get_url()
-print(database_url)

@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from elasticsearch.exceptions import TransportError
-from app.elasticsearch.client import ElasticsearchClient, es_config
-from backend.app.utils.logger import get_logger
+from app.core.elasticsearch.client import ElasticsearchClient, es_config
+from app.utils.logger import get_logger
 
 logger = get_logger() 
 

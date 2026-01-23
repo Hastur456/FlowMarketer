@@ -13,10 +13,6 @@ Number = Union[int, float, Decimal]
 
 
 class ProductSource(BaseModel):
-    """
-    Входная модель для маппинга в ES.
-    Соответствует полям из Product ORM.
-    """
     model_config = ConfigDict(extra="ignore")
     
     id: int

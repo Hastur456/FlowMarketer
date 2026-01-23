@@ -1,5 +1,3 @@
-"""Конфигурация индекса products."""
-
 from typing import Any, Dict
 
 
