@@ -5,7 +5,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from app.config import database_url
+from backend.app.core.config import database_url
 from app.database.models.base import Base
 from app.database.models.user import User
 from app.database.models.access_token import AccessToken
