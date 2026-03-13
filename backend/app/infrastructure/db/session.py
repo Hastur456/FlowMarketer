@@ -1,9 +1,9 @@
+from functools import wraps
+from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio import AsyncSession
-from functools import wraps
-from typing import Optional, AsyncGenerator
 
-from backend.app.core.config import database_url
+from app.core.config import database_url
 
 
 engine = create_async_engine(url=database_url)

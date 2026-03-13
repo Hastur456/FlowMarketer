@@ -1,13 +1,12 @@
 from sqlalchemy import select, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.app.infrastructure.db.base_repository import BaseRepository
-from app.infrastructure.db.models.user import User
+from app.modules.user.models.user import User
 from app.infrastructure.db.session import connection
 from backend.app.core.logger import logger
-
 
 
 class UserRepository(BaseRepository):
@@ -82,37 +81,7 @@ class UserRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при получении администраторов: {e}")
             raise
-
-    @classmethod
-    @connection(commit=True)
-    async def change_password(
-        cls,
-        session: AsyncSession,
-        user_id: str,
-        new_password_hash: str
-    ):
-        """Изменение пароля пользователя"""
-        try:
-            query = select(cls.model).where(cls.model.id == user_id)
-            response = await session.execute(query)
-            user = response.scalar_one_or_none()
-
-            if not user:
-                logger.warning(f"Пользователь с ID {user_id} не найден")
-                return None
-
-            user.password_hash = new_password_hash
-            user.updated_at = datetime.utcnow()
-
-            await session.flush()
-            await session.refresh(user)
-
-            logger.info(f"Пароль пользователя {user_id} изменен")
-            return user
-
-        except SQLAlchemyError as e:
-            logger.error(f"Ошибка при изменении пароля пользователя {user_id}: {e}")
-            raise
+        
 
     @classmethod
     @connection(commit=True)
@@ -133,7 +102,7 @@ class UserRepository(BaseRepository):
                 return None
 
             user.is_admin = is_admin
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
 
             await session.flush()
             await session.refresh(user)

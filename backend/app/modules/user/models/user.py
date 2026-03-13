@@ -6,9 +6,10 @@ from sqlalchemy.orm import (relationship,
     Mapped, 
     mapped_column)
 from uuid import UUID
-from backend.app.infrastructure.db.base import Base
+from datetime import datetime
+from app.infrastructure.db.base import Base
 from app.infrastructure.db.session import get_session
-from app.infrastructure.db.models.access_token import AccessToken
+from app.modules.user.models.access_token import AccessToken
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from typing import List
 
@@ -27,11 +28,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     
     first_name: Mapped[str | None] = mapped_column(String(100))
     last_name: Mapped[str | None] = mapped_column(String(100))
-    phone = Column(String(20), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(20))
     
-    is_blocked = Column(Boolean, default=False, nullable=False)
-    
-    email_verified_at = Column(DateTime, nullable=True)
+    is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime)
+
     email_verification_token = Column(String(255), nullable=True)
     
     password_reset_token = Column(String(255), nullable=True)
@@ -53,11 +54,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         cascade="all, delete-orphan"
     )
 
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
-    cart_items = relationship("CartItem", back_populates="user", cascade="all, delete-orphan")
-    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
-    payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
-    addresses = relationship("UserAddress", back_populates="user", cascade="all, delete-orphan")
+    # orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    # cart_items = relationship("CartItem", back_populates="user", cascade="all, delete-orphan")
+    # reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
+    # payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
+    # addresses = relationship("UserAddress", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, is_admin={self.is_admin})>"

@@ -16,7 +16,7 @@ from sqlalchemy.orm import (
     relationship
 )
 from sqlalchemy.types import UUID as SA_UUID
-from backend.app.infrastructure.db.base import Base
+from app.infrastructure.db.base import Base
 from uuid import UUID
 
 

@@ -6,17 +6,23 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from backend.app.core.config import database_url
-from app.database.models.base import Base
-from app.database.models.user import User
-from app.database.models.access_token import AccessToken
-from app.database.models.cart import CartItem
-from app.database.models.product import Product
-from app.database.models.category import Category
-from app.database.models.order_item import OrderItem
-from app.database.models.order import Order, OrderStatus
-from app.database.models.payment import Payment, PaymentMethod, PaymentStatus
-from app.database.models.review import Review
-from app.database.models.user_addres import UserAddress
+from app.infrastructure.db.base import Base
+
+
+# Import all "models" folders and files as sqlalchemy models 
+
+# import importlib
+# import pkgutil
+# import my_project.apps as apps # Путь к корню с приложениями
+
+# def import_submodules(package):
+#     for loader, name, is_pkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+#         # Ищем модули с названием 'models' или внутри папок 'models'
+#         if "models" in name:
+#             importlib.import_module(name)
+
+# import_submodules(apps)
+# target_metadata = Base.metadata
 
 from alembic import context
 

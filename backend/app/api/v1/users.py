@@ -1,8 +1,8 @@
 from fastapi import APIRouter 
 
-from app.core.authentication.fastapi_users import fastapi_users
-from app.dependencies.authentication import authentication_backend
-from app.core.schemas.user import (
+from app.modules.user.authentication.fastapi_users import fastapi_users
+from app.modules.user.adapters.auth_adapter import authentication_backend
+from app.modules.user.schemas import (
     UserCreate, 
     UserRead, 
     UserUpdate, 

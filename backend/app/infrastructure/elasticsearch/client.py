@@ -1,7 +1,7 @@
 from typing import Optional
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ConnectionError, TransportError
-from backend.app.core.config import settings, ElasticSearchConfig
+from app.core.config import settings, ElasticSearchConfig
 
 
 es_config = settings.es_config

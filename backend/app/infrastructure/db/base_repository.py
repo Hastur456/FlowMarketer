@@ -146,7 +146,7 @@ class BaseRepository(Generic[T]):
     @connection(commit=False)
     async def exists(cls, session: AsyncSession, data_id: str):
         try:
-            response = await cls.find_by_id(data_id=data_id)
+            response = await cls.find_by_id(session, data_id=data_id)
 
             if response is None:
                 logger.warning("Объект с ID {} не существует".format(data_id))

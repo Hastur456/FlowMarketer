@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from elasticsearch.exceptions import TransportError
 from app.infrastructure.elasticsearch.client import ElasticsearchClient, es_config
-from backend.app.core.logger import get_logger
+from app.core.logger import get_logger
 
 logger = get_logger() 
 

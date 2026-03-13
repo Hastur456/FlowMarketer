@@ -1,3 +1,8 @@
+"""
+Конфигурация backend приложения
+"""
+
+
 import os
 from typing import Union, List
 from pydantic_settings import BaseSettings, SettingsConfigDict

@@ -4,7 +4,7 @@ from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin
 from fastapi_users.authentication.strategy import DatabaseStrategy
 
-from app.infrastructure.db.models.user import User
+from app.modules.user.models.user import User
 from app.infrastructure.db.session import get_session
 from app.modules.user.adapters.auth_adapter.backend import authentication_backend
 from app.modules.user.adapters.auth_adapter.strategy import get_database_strategy
