@@ -4,18 +4,23 @@ from __future__ import annotations
 
 from logging import Logger
 from typing import Any, Dict, List
-
+from fastapi import Depends
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ApiError
 
-from backend.app.modules.product.adapters.es_adapter.product_index import ProductIndexConfig
-from backend.app.modules.product.adapters.es_adapter.product_mapper import ProductMapper, ProductESDocument
+from app.modules.product.adapters.es_adapter.product_index import ProductIndexConfig
+from app.modules.product.adapters.es_adapter.product_mapper import ProductMapper, ProductESDocument
+from app.infrastructure.elasticsearch.es_depends import get_es_client
 
 
 class ProductSearcher:
     """Асинхронный поиск товаров."""
     
-    def __init__(self, es_client: AsyncElasticsearch, logger: Logger):
+    def __init__(
+        self,
+        logger: Logger,
+        es_client: AsyncElasticsearch = Depends(get_es_client)
+    ):
         self.es = es_client
         self.logger = logger
         self.index_name = ProductIndexConfig.INDEX_NAME

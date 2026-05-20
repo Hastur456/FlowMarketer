@@ -40,7 +40,7 @@ def connection(commit: bool = False):
                     
                     return result
                 
-                except Exception as e:
+                except Exception:
                     await session.rollback()
                     raise
                 

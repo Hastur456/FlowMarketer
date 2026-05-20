@@ -5,8 +5,8 @@ from elasticsearch import AsyncElasticsearch
 from elasticsearch.helpers import async_streaming_bulk
 from elasticsearch.exceptions import ApiError
 
-from backend.app.modules.product.adapters.es_adapter.product_index import ProductIndexConfig
-from backend.app.modules.product.adapters.es_adapter.product_mapper import ProductMapper, ProductSource
+from app.modules.product.adapters.es_adapter.product_index import ProductIndexConfig
+from app.modules.product.adapters.es_adapter.product_mapper import ProductMapper, ProductSource
 
 
 ProductInput = Union[ProductSource, Mapping[str, Any]]

@@ -5,7 +5,7 @@ from sqlalchemy import func
 from pydantic import BaseModel
 
 from app.infrastructure.db.session import connection
-from backend.app.core.logger import logger
+from app.core.logger import logger
 from typing import Generic, TypeVar
 
 
@@ -25,7 +25,7 @@ class BaseRepository(Generic[T]):
             response = await session.execute(query)
             record = response.scalar_one_or_none()
 
-            if not (record is None):
+            if record:
                 logger.info("Найдена запись {}, по id {}".format(record, data_id))
                 return record
             else:

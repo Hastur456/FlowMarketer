@@ -5,7 +5,7 @@ from fastapi_users.authentication.strategy.db import (
 )
 
 from .access_tokens import get_access_tokens_db
-from app.modules.user.models.access_token import AccessToken
+from app.modules.auth.models.access_token import AccessToken
 
 
 def get_database_strategy(

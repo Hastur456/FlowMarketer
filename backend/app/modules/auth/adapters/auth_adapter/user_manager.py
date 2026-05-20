@@ -1,7 +1,7 @@
 from fastapi import Depends, BackgroundTasks
 
 from .users import get_users_db
-from app.modules.user.authentication.user_manager import UserManager
+from app.modules.auth.authentication.user_manager import UserManager
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
 

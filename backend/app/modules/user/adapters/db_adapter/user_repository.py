@@ -54,7 +54,7 @@ class UserRepository(BaseRepository):
         try:
             query = (
                 select(cls.model)
-                .where(cls.model.is_active == True)
+                .where(cls.model.is_active)
                 .limit(limit)
                 .offset(offset)
             )
@@ -72,7 +72,7 @@ class UserRepository(BaseRepository):
     async def find_admins(cls, session: AsyncSession):
         """Получение всех администраторов"""
         try:
-            query = select(cls.model).where(cls.model.is_admin == True)
+            query = select(cls.model).where(cls.model.is_superuser)
             response = await session.execute(query)
             admins = response.scalars().all()
 
@@ -101,7 +101,7 @@ class UserRepository(BaseRepository):
                 logger.warning(f"Пользователь с ID {user_id} не найден")
                 return None
 
-            user.is_admin = is_admin
+            user.is_superuser = is_admin
             user.updated_at = datetime.now(timezone.utc)
 
             await session.flush()

@@ -2,18 +2,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func, and_, or_, desc
-from pydantic import BaseModel, Field
-from typing import Generic, TypeVar, Optional, List
-from datetime import datetime
 
-
-from app.infrastructure.db.base import Base
+from app.infrastructure.db.base_repository import BaseRepository
 from app.infrastructure.db.session import connection
-from app.modules.product.models import Product
+from app.modules.product.domain.entities.product import Product
 from app.core.logger import logger
 
 
-class ProductRepository(Base):
+class ProductRepository(BaseRepository):
     """
     Репозиторий для работы с товарами
     

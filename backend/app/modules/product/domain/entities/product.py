@@ -1,7 +1,8 @@
 from sqlalchemy import Column, String, Text, Numeric, Integer, Boolean, ForeignKey, Index, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import UUID as SA_UUID
-from backend.app.infrastructure.db.base import Base
+
+from app.infrastructure.db.base import Base
 
 
 class Product(Base):

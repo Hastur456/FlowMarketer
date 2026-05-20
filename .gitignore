@@ -145,5 +145,3 @@ cython_debug/
 #.idea/
 
 redis_data/
-alembic.ini
-migration/

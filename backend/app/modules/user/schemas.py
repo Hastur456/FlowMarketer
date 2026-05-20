@@ -1,8 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field, validator
+from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_extra_types.phone_numbers import PhoneNumber
 from datetime import datetime
-from typing import Optional, List
-from enum import Enum
 from fastapi_users import schemas
 from uuid import UUID
 
@@ -35,9 +34,9 @@ class UserRegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, description="Пароль минимум 8 символов")
     first_name: str = Field(..., min_length=2, max_length=100, description="Имя")
     last_name: str = Field(..., min_length=2, max_length=100, description="Фамилия")
-    phone: Optional[str] = Field(None, pattern=r"^\+?[0-9\-\s\(\)]{10,}$", description="Номер телефона")
+    phone: str | None = Field(None, pattern=r"^\+?[0-9\-\s\(\)]{10,}$", description="Номер телефона")
     
-    @validator('password')
+    @field_validator('password')
     def password_valid(cls, v):
         if not any(char.isupper() for char in v):
             raise ValueError('Пароль должен содержать заглавные буквы')
@@ -74,7 +73,7 @@ class UserPasswordChangeRequest(BaseModel):
     new_password: str = Field(..., min_length=8, description="Новый пароль")
     confirm_password: str = Field(..., description="Подтверждение пароля")
     
-    @validator('new_password')
+    @field_validator('new_password')
     def password_valid(cls, v):
         if not any(char.isupper() for char in v):
             raise ValueError('Пароль должен содержать заглавные буквы')
@@ -82,7 +81,7 @@ class UserPasswordChangeRequest(BaseModel):
             raise ValueError('Пароль должен содержать цифры')
         return v
     
-    @validator('confirm_password')
+    @field_validator('confirm_password')
     def passwords_match(cls, v, values):
         if 'new_password' in values and v != values['new_password']:
             raise ValueError('Пароли не совпадают')

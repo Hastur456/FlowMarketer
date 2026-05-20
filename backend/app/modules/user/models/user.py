@@ -3,23 +3,19 @@ from sqlalchemy import (
     select
 )
 from sqlalchemy.orm import (relationship,
-    Mapped, 
+    Mapped,
     mapped_column)
-from uuid import UUID
 from datetime import datetime
 from app.infrastructure.db.base import Base
-from app.infrastructure.db.session import get_session
-from app.modules.user.models.access_token import AccessToken
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
+from app.modules.auth.models.access_token import AccessToken
 from typing import List
-
 from fastapi_users_db_sqlalchemy import (
     SQLAlchemyBaseUserTable,
     SQLAlchemyUserDatabase as SQLAlchemyUserDatabaseGeneric
 )
 
 
-class User(SQLAlchemyBaseUserTableUUID, Base):
+class User(SQLAlchemyBaseUserTable, Base):
     __tablename__ = "users"
     __table_args__ = (
         Index('idx_users_email', 'email', unique=True),
@@ -61,11 +57,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # addresses = relationship("UserAddress", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<User(id={self.id}, email={self.email}, is_admin={self.is_admin})>"
-
-
-class IdUUIDMixin(Base):
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+        return f"<User(id={self.id}, email={self.email}, is_superuser={self.is_superuser})>"
 
 
 class SQLAlchemyUserDatabase(SQLAlchemyUserDatabaseGeneric):

@@ -1,12 +1,10 @@
 from fastapi import APIRouter 
 
-from app.modules.user.authentication.fastapi_users import fastapi_users
-from app.modules.user.adapters.auth_adapter import authentication_backend
-from app.modules.user.schemas import (
-    UserCreate, 
-    UserRead, 
-    UserUpdate, 
-    UserRegisteredNotification
+from app.modules.auth.authentication.fastapi_users import fastapi_users
+from app.modules.auth.adapters.auth_adapter import authentication_backend
+from app.modules.auth.schemas import (
+    UserCreate,
+    UserRead
 )
 
 
@@ -30,3 +28,4 @@ router.include_router(
         UserCreate
     )
 )
+

@@ -1,5 +1,5 @@
 from fastapi_users.authentication import AuthenticationBackend
-from app.modules.user.authentication.transport import (
+from app.modules.auth.authentication.transport import (
     bearretransport,
     cookie_transport
 )

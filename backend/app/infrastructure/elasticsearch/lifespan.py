@@ -2,9 +2,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from elasticsearch.exceptions import TransportError
 from app.infrastructure.elasticsearch.client import ElasticsearchClient, es_config
-from app.core.logger import get_logger
+from app.core.logger import logger
 
-logger = get_logger() 
 
 @asynccontextmanager
 async def es_lifespan(app: FastAPI):

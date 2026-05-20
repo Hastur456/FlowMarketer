@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.user.models.access_token import AccessToken
+from app.modules.auth.models.access_token import AccessToken
 from app.infrastructure.db.session import get_session
 
 

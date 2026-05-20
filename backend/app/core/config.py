@@ -98,6 +98,15 @@ class ElasticSearchConfig(BaseSettings):
         return config
 
 
+class AuthConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=os.path.join(os.getcwd(), ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+    SECRET: str | None = Field(default="SECRET", description="Database username")
+
 
 class DatabaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
@@ -139,6 +148,7 @@ class Settings(BaseSettings):
     logger_config: LoggerConfig = LoggerConfig()
     run: RunConfig = RunConfig()
     database: DatabaseConfig = DatabaseConfig()
+    auth: AuthConfig = AuthConfig()
 
 
 settings = Settings()
