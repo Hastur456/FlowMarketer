@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from backend.app.core.config import database_url
 from app.infrastructure.db.base import Base
+from app.modules.product.infrastructure.persistence import ProductModel  # noqa: F401
 
 
 # Import all "models" folders and files as sqlalchemy models 

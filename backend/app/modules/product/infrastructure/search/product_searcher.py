@@ -1,37 +1,28 @@
-"""Асинхронный поисковик товаров."""
-
 from __future__ import annotations
 
 from logging import Logger
-from typing import Any, Dict, List
-from fastapi import Depends
+from typing import Any
+from uuid import UUID
+
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ApiError
 
 from app.modules.product.infrastructure.search.product_index import ProductIndexConfig
-from app.modules.product.infrastructure.search.product_mapper import ProductMapper, ProductESDocument
-from app.infrastructure.elasticsearch.es_depends import get_es_client
+from app.modules.product.infrastructure.search.product_mapper import ProductESDocument, ProductMapper
 
 
 class ProductSearcher:
-    """Асинхронный поиск товаров."""
-    
-    def __init__(
-        self,
-        logger: Logger,
-        es_client: AsyncElasticsearch = Depends(get_es_client)
-    ):
+    def __init__(self, es_client: AsyncElasticsearch, logger: Logger):
         self.es = es_client
         self.logger = logger
         self.index_name = ProductIndexConfig.INDEX_NAME
-    
+
     async def search_by_text(
         self,
         query: str,
         size: int = 10,
         from_: int = 0,
-    ) -> List[ProductESDocument]:
-        """Полнотекстовый поиск (асинхронно)."""
+    ) -> list[ProductESDocument]:
         try:
             body = {
                 "query": {
@@ -43,60 +34,55 @@ class ProductSearcher:
                 "from": from_,
                 "size": size,
             }
-            
+
             response = await self.es.search(index=self.index_name, body=body)
-            
             hits = response.get("hits", {}).get("hits", [])
             return [ProductMapper.from_es_hit(hit) for hit in hits]
-        
-        except ApiError as e:
-            self.logger.error("Search error: %s", e)
+        except ApiError as error:
+            self.logger.error("Search error: %s", error)
             raise
-    
+
     async def filter_by_category(
         self,
-        category_id: int,
+        category_id: UUID,
         size: int = 20,
-    ) -> List[ProductESDocument]:
-        """Фильтр по категории (асинхронно)."""
+    ) -> list[ProductESDocument]:
         try:
             body = {
                 "query": {
-                    "term": {"category_id": category_id}
+                    "term": {"category_id": str(category_id)}
                 },
                 "size": size,
             }
-            
+
             response = await self.es.search(index=self.index_name, body=body)
             hits = response.get("hits", {}).get("hits", [])
             return [ProductMapper.from_es_hit(hit) for hit in hits]
-        
-        except ApiError as e:
-            self.logger.error("Filter error: %s", e)
+        except ApiError as error:
+            self.logger.error("Filter error: %s", error)
             raise
-    
+
     async def search_with_filters(
         self,
         query: str,
-        min_price: float = None,
-        max_price: float = None,
+        min_price: float | None = None,
+        max_price: float | None = None,
         in_stock: bool = True,
         size: int = 10,
-    ) -> List[ProductESDocument]:
-        """Поиск с фильтрами (асинхронно)."""
-        filters = []
-        
+    ) -> list[ProductESDocument]:
+        filters: list[dict[str, Any]] = []
+
         if in_stock:
             filters.append({"term": {"is_available": True}})
-        
+
         if min_price is not None:
             filters.append({"range": {"price": {"gte": min_price}}})
-        
+
         if max_price is not None:
             filters.append({"range": {"price": {"lte": max_price}}})
-        
+
         try:
-            body: Dict[str, Any] = {
+            body = {
                 "query": {
                     "bool": {
                         "must": [
@@ -112,17 +98,15 @@ class ProductSearcher:
                 },
                 "size": size,
             }
-            
+
             response = await self.es.search(index=self.index_name, body=body)
             hits = response.get("hits", {}).get("hits", [])
             return [ProductMapper.from_es_hit(hit) for hit in hits]
-        
-        except ApiError as e:
-            self.logger.error("Filtered search error: %s", e)
+        except ApiError as error:
+            self.logger.error("Filtered search error: %s", error)
             raise
-    
-    async def autocomplete(self, prefix: str, size: int = 5) -> List[str]:
-        """Автодополнение (асинхронно)."""
+
+    async def autocomplete(self, prefix: str, size: int = 5) -> list[str]:
         try:
             body = {
                 "query": {
@@ -133,11 +117,10 @@ class ProductSearcher:
                 "_source": ["name"],
                 "size": size,
             }
-            
+
             response = await self.es.search(index=self.index_name, body=body)
             hits = response.get("hits", {}).get("hits", [])
             return [hit["_source"]["name"] for hit in hits]
-        
-        except ApiError as e:
-            self.logger.error("Autocomplete error: %s", e)
+        except ApiError as error:
+            self.logger.error("Autocomplete error: %s", error)
             raise

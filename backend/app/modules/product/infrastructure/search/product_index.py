@@ -20,7 +20,7 @@ class ProductIndexConfig:
     
     MAPPINGS: Dict[str, Any] = {
         "properties": {
-            "id": {"type": "integer"},
+            "id": {"type": "keyword"},
             "sku": {"type": "keyword"},
             "name": {
                 "type": "text",
@@ -38,7 +38,7 @@ class ProductIndexConfig:
             "is_active": {"type": "boolean"},
             "is_featured": {"type": "boolean"},
             "is_bestseller": {"type": "boolean"},
-            "category_id": {"type": "integer"},
+            "category_id": {"type": "keyword"},
             "category_name": {"type": "keyword"},
             "average_rating": {"type": "scaled_float", "scaling_factor": 10},
             "review_count": {"type": "integer"},

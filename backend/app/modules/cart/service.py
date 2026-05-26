@@ -1,11 +1,10 @@
 from logging import Logger
-from typing import Any, Dict, List
+from uuid import UUID
+
 from elasticsearch import AsyncElasticsearch
 
-from app.infrastructure.elasticsearch.client import ElasticsearchClient
-from backend.app.modules.product.infrastructure.search.product_indexer import ProductIndexer
-from backend.app.modules.product.infrastructure.search.product_searcher import ProductSearcher
-from backend.app.modules.product.infrastructure.search.product_mapper import ProductMapper, ProductSource
+from app.modules.product.infrastructure.search.product_indexer import ProductIndexer
+from app.modules.product.infrastructure.search.product_searcher import ProductSearcher
 
 
 class ProductService:
@@ -34,9 +33,9 @@ class ProductService:
     async def bulk_index_products(self, products: list[dict]):
         return await self.indexer.bulk_index(products)
 
-    async def update_product(self, product_id: int, updates: dict):
+    async def update_product(self, product_id: UUID, updates: dict):
         return await self.indexer.update_one(product_id, updates)
 
-    async def delete_product(self, product_id: int):
+    async def delete_product(self, product_id: UUID):
         return await self.indexer.delete_one(product_id)
 

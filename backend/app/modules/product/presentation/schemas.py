@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -11,7 +12,7 @@ class ProductCreateRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=255)
     slug: str = Field(..., min_length=3, max_length=255)
     description: Optional[str] = Field(None, max_length=5000)
-    category_id: int = Field(..., gt=0)
+    category_id: UUID
     price: Decimal = Field(..., gt=0, decimal_places=2)
     discount_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     cost_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
@@ -40,7 +41,7 @@ class ProductUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=3, max_length=255)
     slug: Optional[str] = Field(None, min_length=3, max_length=255)
     description: Optional[str] = Field(None, max_length=5000)
-    category_id: Optional[int] = Field(None, gt=0)
+    category_id: Optional[UUID] = None
     price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     discount_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
     cost_price: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
@@ -70,10 +71,10 @@ class ProductUpdateRequest(BaseModel):
 class ProductResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: UUID
     name: str
     slug: str
-    category_id: int
+    category_id: UUID
     price: Decimal
     discount_price: Optional[Decimal] = None
     stock_quantity: int

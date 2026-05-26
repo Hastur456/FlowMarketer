@@ -1,6 +1,6 @@
 # import pytest
-# from app.elasticsearch.indexers.product_indexer import ProductIndexer
-# from app.elasticsearch.searchers.product_searcher import ProductSearcher
+# from app.modules.product.infrastructure.search.product_indexer import ProductIndexer
+# from app.modules.product.infrastructure.search.product_searcher import ProductSearcher
 # from tests.elasticsearch.utils.test_index_config import logger
 
 

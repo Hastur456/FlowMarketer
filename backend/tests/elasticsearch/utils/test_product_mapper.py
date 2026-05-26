@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, UTC
-from app.elasticsearch.mappers.product_mapper import (
+from app.modules.product.infrastructure.search.product_mapper import (
     ProductMapper,
     ProductSource,
 )
@@ -8,14 +8,14 @@ from app.elasticsearch.mappers.product_mapper import (
 
 def test_to_es_document_basic():
     src = ProductSource(
-        id=1,
+        id="00000000-0000-0000-0000-000000000001",
         name="iPhone 15 Pro",
         description="Apple smartphone",
         sku="APL-IP15",
         price=1000,
         discount_price=900,
         stock_quantity=10,
-        category_id=2,
+        category_id="00000000-0000-0000-0000-000000000002",
         category_name="Smartphones",
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
@@ -23,7 +23,7 @@ def test_to_es_document_basic():
 
     doc = ProductMapper.to_es_document(src)
 
-    assert doc["id"] == 1
+    assert doc["id"] == "00000000-0000-0000-0000-000000000001"
     assert doc["price"] == 1000.0
     assert doc["discount_price"] == 900.0
     assert doc["is_available"] is True
@@ -33,12 +33,12 @@ def test_to_es_document_basic():
 
 def test_is_available_false_when_out_of_stock():
     src = {
-        "id": 2,
+        "id": "00000000-0000-0000-0000-000000000002",
         "name": "Test",
         "price": 100,
         "stock_quantity": 0,
         "is_active": True,
-        "category_id": 1,
+        "category_id": "00000000-0000-0000-0000-000000000001",
         "category_name": "Cat",
         "created_at": datetime.now(UTC),
         "updated_at": datetime.now(UTC),

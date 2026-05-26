@@ -1,25 +1,27 @@
 from logging import Logger
 from typing import List
 from uuid import UUID
-from elasticsearch import AsyncElasticsearch
 
 from app.core.logger import logger
+from app.modules.product.application.dto import ProductCreateDTO, ProductUpdateDTO
+from app.modules.product.application.mappers import ProductApplicationMapper
+from app.modules.product.application.ports import ProductSearchIndex, ProductSearchReader
 from app.modules.product.domain.entities.product import Product
-from app.modules.product.infrastructure.search.product_indexer import ProductIndexer
-from app.modules.product.infrastructure.search.product_searcher import ProductSearcher
-from app.modules.product.infrastructure.persistence import SqlAlchemyProductRepository
+from app.modules.product.domain.repositories import ProductRepository
 
 
 class ProductService:
     def __init__(
         self,
-        es: AsyncElasticsearch,
+        repository: ProductRepository,
+        indexer: ProductSearchIndex,
+        searcher: ProductSearchReader,
         logger: Logger = logger,
     ):
         self.logger = logger
-        self.repository = SqlAlchemyProductRepository()
-        self.indexer = ProductIndexer(es, logger)
-        self.searcher = ProductSearcher(es, logger)
+        self.repository = repository
+        self.indexer = indexer
+        self.searcher = searcher
 
     async def initialize(self):
         await self.indexer.create_index()
@@ -44,24 +46,39 @@ class ProductService:
             offset=offset,
         )
 
-    async def create_product(self, data: Product):
-        product = await self.repository.create(data)
+    async def create_product(self, data: Product | ProductCreateDTO):
+        product_data = (
+            ProductApplicationMapper.create_dto_to_domain(data)
+            if isinstance(data, ProductCreateDTO)
+            else data
+        )
+        product = await self.repository.create(product_data)
         await self.indexer.index_one(product.model_dump())
         return product
 
-    async def bulk_create_products(self, products: List[Product]):
+    async def bulk_create_products(self, products: List[Product | ProductCreateDTO]):
         created = []
         for data in products:
-            product = await self.repository.create(data)
+            product_data = (
+                ProductApplicationMapper.create_dto_to_domain(data)
+                if isinstance(data, ProductCreateDTO)
+                else data
+            )
+            product = await self.repository.create(product_data)
             created.append(product.model_dump())
         await self.indexer.bulk_index(created)
         return created
 
-    async def update_product(self, product_id: UUID, updates: dict):
-        product = await self.repository.update(product_id, updates)
+    async def update_product(self, product_id: UUID, updates: ProductUpdateDTO | dict):
+        update_data = (
+            updates.model_dump(exclude_unset=True)
+            if isinstance(updates, ProductUpdateDTO)
+            else updates
+        )
+        product = await self.repository.update(product_id, update_data)
         if not product:
             return None
-        await self.indexer.update_one(product_id, updates)
+        await self.indexer.index_one(product.model_dump())
         return product
 
     async def delete_product(self, product_id: UUID):

@@ -1,14 +1,14 @@
-from fastapi import APIRouter, FastAPI, Depends
+from fastapi import APIRouter, Depends
 
-from backend.app.infrastructure.elasticsearch.es_depends import get_es_client
-from backend.app.modules.product.infrastructure.search.product_searcher import ProductSearcher
-from backend.app.modules.product.application.services.product_service import ProductService
+from app.modules.product.application.services import ProductService
+from app.modules.product.presentation.dependencies import get_product_service
 
-router = APIRouter(prefix="products")
+router = APIRouter(prefix="/products", tags=["products"])
 
 
 @router.get("/search")
-async def search_products(query: str, es_service: ProductSearcher=Depends(get_product_service)):
-    hits = await es_service.search_by_text(query)
-
-    return hits
+async def search_products(
+    query: str,
+    product_service: ProductService = Depends(get_product_service),
+):
+    return await product_service.search_products(query=query)

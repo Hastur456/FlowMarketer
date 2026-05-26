@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from app.elasticsearch.indexers.product_indexer import ProductIndexer
+from app.modules.product.infrastructure.search.product_indexer import ProductIndexer
 
 
 @pytest.mark.asyncio
@@ -26,12 +26,12 @@ async def test_index_one():
     indexer = ProductIndexer(es, logger)
 
     product = {
-        "id": 1,
+        "id": "00000000-0000-0000-0000-000000000001",
         "name": "Test",
         "price": 100,
         "stock_quantity": 5,
         "is_active": True,
-        "category_id": 1,
+        "category_id": "00000000-0000-0000-0000-000000000002",
         "category_name": "Cat",
         "created_at": "2024-01-01T00:00:00",
         "updated_at": "2024-01-01T00:00:00",
@@ -49,11 +49,12 @@ async def test_delete_one():
     logger = MagicMock()
 
     indexer = ProductIndexer(es, logger)
-    result = await indexer.delete_one(42)
+    product_id = "00000000-0000-0000-0000-000000000042"
+    result = await indexer.delete_one(product_id)
 
     assert result is True
     es.delete.assert_called_once_with(
         index=indexer.index_name,
-        id=42,
+        id=product_id,
         refresh=False,
     )

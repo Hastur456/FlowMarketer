@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from app.elasticsearch.searchers.product_searcher import ProductSearcher
+from app.modules.product.infrastructure.search.product_searcher import ProductSearcher
 from tests.elasticsearch.factories.product_es import product_es_hit
 
 
@@ -12,7 +12,13 @@ async def test_search_by_text():
     es.search.return_value = {
         "hits": {
             "hits": [
-                product_es_hit(**{"id": 1, "name": "iPhone", "price": 1000})
+                product_es_hit(
+                    **{
+                        "id": "00000000-0000-0000-0000-000000000001",
+                        "name": "iPhone",
+                        "price": 1000,
+                    }
+                )
             ]
         }
     }
@@ -22,7 +28,7 @@ async def test_search_by_text():
 
     es.search.assert_called_once()
     assert len(results) == 1
-    assert results[0].id == 1
+    assert results[0].id == "00000000-0000-0000-0000-000000000001"
     assert results[0].name == "iPhone"
 
 

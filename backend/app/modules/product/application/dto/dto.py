@@ -1,5 +1,6 @@
 from decimal import Decimal
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,7 +11,7 @@ class ProductCreateDTO(BaseModel):
     name: str
     slug: str
     description: Optional[str] = None
-    category_id: int
+    category_id: UUID
     price: Decimal
     discount_price: Optional[Decimal] = None
     cost_price: Optional[Decimal] = None
@@ -31,7 +32,7 @@ class ProductUpdateDTO(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     description: Optional[str] = None
-    category_id: Optional[int] = None
+    category_id: Optional[UUID] = None
     price: Optional[Decimal] = None
     discount_price: Optional[Decimal] = None
     cost_price: Optional[Decimal] = None

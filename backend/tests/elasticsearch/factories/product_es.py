@@ -4,7 +4,7 @@ from datetime import datetime, UTC
 def product_es_hit(**overrides):
     base = {
         "_source": {
-            "id": 1,
+            "id": "00000000-0000-0000-0000-000000000001",
             "sku": "SKU-1",
             "name": "iPhone",
             "description": "Apple smartphone",
@@ -16,7 +16,7 @@ def product_es_hit(**overrides):
             "is_active": True,
             "is_featured": False,
             "is_bestseller": False,
-            "category_id": 2,
+            "category_id": "00000000-0000-0000-0000-000000000002",
             "category_name": "Smartphones",
             "average_rating": 4.8,
             "review_count": 120,
