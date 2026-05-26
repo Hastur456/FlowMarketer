@@ -3,9 +3,9 @@ from typing import Any, Dict, List
 from elasticsearch import AsyncElasticsearch
 
 from app.infrastructure.elasticsearch.client import ElasticsearchClient
-from backend.app.modules.product.adapters.es_adapter.product_indexer import ProductIndexer
-from backend.app.modules.product.adapters.es_adapter.product_searcher import ProductSearcher
-from backend.app.modules.product.adapters.es_adapter.product_mapper import ProductMapper, ProductSource
+from backend.app.modules.product.infrastructure.search.product_indexer import ProductIndexer
+from backend.app.modules.product.infrastructure.search.product_searcher import ProductSearcher
+from backend.app.modules.product.infrastructure.search.product_mapper import ProductMapper, ProductSource
 
 
 class ProductService:

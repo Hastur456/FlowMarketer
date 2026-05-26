@@ -1,4 +1,4 @@
-from .product_sevice import ProductService
+from .product_service import ProductService
 
 
 __all__ = [

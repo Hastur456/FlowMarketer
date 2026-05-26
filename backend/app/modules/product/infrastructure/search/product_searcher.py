@@ -8,8 +8,8 @@ from fastapi import Depends
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ApiError
 
-from app.modules.product.adapters.es_adapter.product_index import ProductIndexConfig
-from app.modules.product.adapters.es_adapter.product_mapper import ProductMapper, ProductESDocument
+from app.modules.product.infrastructure.search.product_index import ProductIndexConfig
+from app.modules.product.infrastructure.search.product_mapper import ProductMapper, ProductESDocument
 from app.infrastructure.elasticsearch.es_depends import get_es_client
 
 

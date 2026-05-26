@@ -5,9 +5,9 @@ from elasticsearch import AsyncElasticsearch
 
 from app.core.logger import logger
 from app.modules.product.domain.entities.product import Product
-from app.modules.product.adapters.es_adapter.product_indexer import ProductIndexer
-from app.modules.product.adapters.es_adapter.product_searcher import ProductSearcher
-from app.modules.product.adapters.db_adapter.product_repository import ProductRepository
+from app.modules.product.infrastructure.search.product_indexer import ProductIndexer
+from app.modules.product.infrastructure.search.product_searcher import ProductSearcher
+from app.modules.product.infrastructure.persistence import SqlAlchemyProductRepository
 
 
 class ProductService:
@@ -17,7 +17,7 @@ class ProductService:
         logger: Logger = logger,
     ):
         self.logger = logger
-        self.repository = ProductRepository()
+        self.repository = SqlAlchemyProductRepository()
         self.indexer = ProductIndexer(es, logger)
         self.searcher = ProductSearcher(es, logger)
 
@@ -37,7 +37,7 @@ class ProductService:
             return None
         return product
 
-    async def get_products_by_category(self, category_id: int, limit: int = 50, offset: int = 0):
+    async def get_products_by_category(self, category_id: UUID, limit: int = 50, offset: int = 0):
         return await self.repository.find_by_category(
             category_id=category_id,
             limit=limit,
@@ -45,42 +45,42 @@ class ProductService:
         )
 
     async def create_product(self, data: Product):
-        product = await self.repository.create(**data)
+        product = await self.repository.create(data)
         await self.indexer.index_one(product.model_dump())
         return product
 
     async def bulk_create_products(self, products: List[Product]):
         created = []
         for data in products:
-            product = await self.repository.create(**data)
+            product = await self.repository.create(data)
             created.append(product.model_dump())
         await self.indexer.bulk_index(created)
         return created
 
-    async def update_product(self, product_id: int, updates: dict):
-        product = await self.repository.update(product_id, **updates)
+    async def update_product(self, product_id: UUID, updates: dict):
+        product = await self.repository.update(product_id, updates)
         if not product:
             return None
         await self.indexer.update_one(product_id, updates)
         return product
 
-    async def delete_product(self, product_id: int):
+    async def delete_product(self, product_id: UUID):
         product = await self.repository.delete(product_id)
         if not product:
             return None
         await self.indexer.delete_one(product_id)
         return product
 
-    async def update_stock(self, product_id: int, quantity_change: int):
+    async def update_stock(self, product_id: UUID, quantity_change: int):
         product = await self.repository.update_stock(
             product_id=product_id,
             quantity_change=quantity_change,
         )
         if product:
-            await self.indexer.update_one(product_id, {"stock": product.stock})
+            await self.indexer.update_one(product_id, {"stock_quantity": product.stock_quantity})
         return product
 
-    async def reindex_product(self, product_id: int):
+    async def reindex_product(self, product_id: UUID):
         product = await self.repository.find_by_id(product_id)
         if not product:
             return None
