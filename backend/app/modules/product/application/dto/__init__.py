@@ -1,16 +1,8 @@
-from .product_schema import (
-    ProductCreateRequest,
-    ProductDetailResponse,
-    ProductListResponse,
-    ProductResponse,
-    ProductUpdateRequest,
-)
+from .dto import ProductCreateDTO, ProductSearchDTO, ProductUpdateDTO
 
 
 __all__ = [
-    ProductCreateRequest,
-    ProductDetailResponse,
-    ProductListResponse,
-    ProductResponse,
-    ProductUpdateRequest,
+    "ProductCreateDTO",
+    "ProductSearchDTO",
+    "ProductUpdateDTO",
 ]
