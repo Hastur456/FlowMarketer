@@ -1,78 +1,147 @@
-from sqlalchemy import Column, String, Text, Numeric, Integer, Boolean, ForeignKey, Index, Float
-from sqlalchemy.orm import relationship
-from sqlalchemy.types import UUID as SA_UUID
+from datetime import datetime
+from decimal import Decimal
+from typing import Optional
+from uuid import UUID
 
-from app.infrastructure.db.base import Base
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-class Product(Base):
-    __tablename__ = "products"
-    __table_args__ = (
-        Index('idx_products_slug', 'slug', unique=True),
-        Index('idx_products_category_id', 'category_id'),
-        Index('idx_products_is_active', 'is_active'),
-        Index('idx_products_price', 'price'),
-    )
-    
-    name = Column(String(255), nullable=False, index=True)
-    slug = Column(String(255), nullable=False, unique=True, index=True)
-    description = Column(Text, nullable=True)
-    category_id = Column(SA_UUID(as_uuid=True), ForeignKey('categories.id'), nullable=False)
-    
-    price = Column(Numeric(10, 2), nullable=False)
-    discount_price = Column(Numeric(10, 2), nullable=True)
-    cost_price = Column(Numeric(10, 2), nullable=True)  # Себестоимость (только в БД)
-    
-    # Остаток (stock -> stock_quantity для ES)
-    stock_quantity = Column(Integer, default=0, nullable=False)  # ← ПЕРЕИМЕНОВАНО
-    reserved_stock = Column(Integer, default=0)  # Зарезервировано в заказах (только в БД)
-    sku = Column(String(100), unique=True, nullable=True, index=True)
-    
-    # SEO и контент (только в БД, не индексируются в ES)
-    meta_title = Column(String(255), nullable=True)
-    meta_description = Column(Text, nullable=True)
-    tags = Column(String(500), nullable=True)
-    
-    # Изображения (только в БД, не индексируются в ES)
-    image_url = Column(String(500), nullable=True)
-    gallery_urls = Column(Text, nullable=True)
-    
-    # Рейтинг (rating -> average_rating для ES)
-    average_rating = Column(Float, default=0.0)  # ← ПЕРЕИМЕНОВАНО
-    review_count = Column(Integer, default=0)
-    
-    # Статусы
-    is_active = Column(Boolean, default=True, index=True)
-    is_featured = Column(Boolean, default=False)
-    is_bestseller = Column(Boolean, default=False)
-    
-    # Метрики для ES
-    popularity_score = Column(Integer, default=0)  # ← ДОБАВЛЕНО
-    sales_count = Column(Integer, default=0)       # ← ДОБАВЛЕНО
-    view_count = Column(Integer, default=0)        # ← ДОБАВЛЕНО
-    
-    # Отношения
-    category = relationship("Category", back_populates="products")
-    order_items = relationship("OrderItem", back_populates="product")
-    cart_items = relationship("CartItem", back_populates="product")
-    reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
-    
-    def __repr__(self):
-        return f"<Product(id={self.id}, name={self.name}, price={self.price})>"
-    
+class Product(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
+
+    id: Optional[UUID] = None
+    name: str = Field(..., min_length=3, max_length=255)
+    slug: str = Field(..., min_length=3, max_length=255)
+    description: Optional[str] = Field(None, max_length=5000)
+    category_id: UUID
+
+    price: Decimal = Field(..., gt=0)
+    discount_price: Optional[Decimal] = Field(None, gt=0)
+    cost_price: Optional[Decimal] = Field(None, gt=0)
+
+    stock_quantity: int = Field(default=0, ge=0)
+    reserved_stock: int = Field(default=0, ge=0)
+    sku: Optional[str] = Field(None, max_length=100)
+
+    meta_title: Optional[str] = Field(None, max_length=255)
+    meta_description: Optional[str] = Field(None, max_length=500)
+    tags: Optional[str] = Field(None, max_length=500)
+
+    image_url: Optional[str] = Field(None, max_length=500)
+    gallery_urls: Optional[list[str]] = None
+
+    average_rating: float = Field(default=0.0, ge=0, le=5)
+    review_count: int = Field(default=0, ge=0)
+
+    is_active: bool = True
+    is_featured: bool = False
+    is_bestseller: bool = False
+
+    popularity_score: int = Field(default=0, ge=0)
+    sales_count: int = Field(default=0, ge=0)
+    view_count: int = Field(default=0, ge=0)
+
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    @field_validator("name", "slug")
+    @classmethod
+    def not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Value cannot be blank")
+        return value
+
+    @model_validator(mode="after")
+    def validate_product_rules(self) -> "Product":
+        if self.discount_price is not None and self.discount_price >= self.price:
+            raise ValueError("Discount price must be less than price")
+
+        if self.reserved_stock > self.stock_quantity:
+            raise ValueError("Reserved stock cannot exceed stock quantity")
+
+        return self
+
     @property
-    def available_stock(self):
-        """Доступный остаток"""
-        return self.stock_quantity - self.reserved_stock  # ← ОБНОВЛЕНО
-    
+    def available_stock(self) -> int:
+        return self.stock_quantity - self.reserved_stock
+
     @property
-    def is_available(self):
-        """Наличие товара (для ES is_available)"""
-        return bool(self.is_active and self.stock_quantity > 0)  # ← ДОБАВЛЕНО
-    
+    def is_available(self) -> bool:
+        return self.is_active and self.available_stock > 0
+
     @property
-    def discount_percent(self):
-        """Процент скидки"""
-        if self.discount_price:
-            return ((float(self.price) - float(self.discount_price)) / float(self.price)) * 100
-        return 0
+    def discount_percent(self) -> float:
+        if self.discount_price is None:
+            return 0.0
+
+        return (
+            (float(self.price) - float(self.discount_price))
+            / float(self.price)
+            * 100
+        )
+
+    def activate(self) -> None:
+        self.is_active = True
+
+    def deactivate(self) -> None:
+        self.is_active = False
+
+    def change_price(self, price: Decimal) -> None:
+        if price <= 0:
+            raise ValueError("Price must be positive")
+
+        if self.discount_price is not None and self.discount_price >= price:
+            raise ValueError("Discount price must be less than price")
+
+        self.price = price
+
+    def set_discount_price(self, discount_price: Optional[Decimal]) -> None:
+        if discount_price is not None and discount_price >= self.price:
+            raise ValueError("Discount price must be less than price")
+
+        self.discount_price = discount_price
+
+    def increase_stock(self, quantity: int) -> None:
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+
+        self.stock_quantity += quantity
+
+    def decrease_stock(self, quantity: int) -> None:
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+
+        if self.available_stock < quantity:
+            raise ValueError("Not enough available stock")
+
+        self.stock_quantity -= quantity
+
+    def reserve_stock(self, quantity: int) -> None:
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+
+        if self.available_stock < quantity:
+            raise ValueError("Not enough available stock")
+
+        self.reserved_stock += quantity
+
+    def release_stock(self, quantity: int) -> None:
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+
+        self.reserved_stock = max(0, self.reserved_stock - quantity)
+
+    def register_sale(self, quantity: int = 1) -> None:
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+
+        if self.reserved_stock < quantity:
+            raise ValueError("Not enough reserved stock")
+
+        self.reserved_stock -= quantity
+        self.stock_quantity -= quantity
+        self.sales_count += quantity
+
+    def register_view(self) -> None:
+        self.view_count += 1
