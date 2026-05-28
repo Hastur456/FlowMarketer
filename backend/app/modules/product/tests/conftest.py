@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
 from uuid import UUID
 
 import pytest_asyncio
@@ -8,10 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.pool import StaticPool
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
 from app.infrastructure.db.base import Base
-from app.modules.product.infrastructure.persistence.product_model import ProductModel
 
 
 TEST_DATABASE_URL = "sqlite+aiosqlite://"
