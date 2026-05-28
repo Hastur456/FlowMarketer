@@ -1,12 +1,12 @@
+from typing import Generic, TypeVar
+
+from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
-from pydantic import BaseModel
 
-from app.infrastructure.db.session import connection
 from app.core.logger import logger
-from typing import Generic, TypeVar
 
 
 T = TypeVar("T")
@@ -15,75 +15,94 @@ T = TypeVar("T")
 class BaseRepository(Generic[T]):
     model: type[T] = None
 
+    @staticmethod
+    def _dump_data(data: BaseModel | dict) -> dict:
+        return data.model_dump() if isinstance(data, BaseModel) else data
 
     @classmethod
-    @connection(commit=False)
-    async def find_by_id(cls, session: AsyncSession, data_id: str):
+    async def find_by_id(
+        cls,
+        data_id: str,
+        session: AsyncSession | None = None,
+    ):
         try:
             query = select(cls.model).where(cls.model.id == data_id)
-            
             response = await session.execute(query)
             record = response.scalar_one_or_none()
 
             if record:
-                logger.info("Найдена запись {}, по id {}".format(record, data_id))
+                logger.info("Found record %s by id %s", record, data_id)
                 return record
-            else:
-                logger.info("Запись с id: {}, не найдена".format(data_id))
-                return None
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при поиске по id {}, error: {}".format(data_id, e))
+
+            logger.info("Record with id %s not found", data_id)
+            return None
+        except SQLAlchemyError as error:
+            logger.error("Error finding record by id %s: %s", data_id, error)
             raise
 
-
     @classmethod
-    @connection(commit=False)
-    async def find_all(cls, session: AsyncSession, filters: BaseModel | None = None):        
-        try:
-            filters_dict = filters.model_dump() if filters else {}
+    async def find_all(
+        cls,
+        filters: BaseModel | None = None,
+        session: AsyncSession | None = None
+    ):
+        filters_dict = filters.model_dump() if filters else {}
 
+        try:
             query = select(cls.model).filter_by(**filters_dict)
             response = await session.execute(query)
             records = response.scalars().all()
 
-            logger.debug("Найдено {} записей, по фильтрам {}".format(len(records), filters_dict))
+            logger.debug("Found %s records by filters %s", len(records), filters_dict)
             return records
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при поиске по фильтрам {}, error: {}".format(filters_dict, e))
+        except SQLAlchemyError as error:
+            logger.error("Error finding records by filters %s: %s", filters_dict, error)
             raise
 
-
     @classmethod
-    @connection(commit=True)
-    async def create(cls, session: AsyncSession, data: BaseModel):
+    async def create(
+        cls,
+        data: BaseModel | dict,
+        session: AsyncSession | None = None,
+    ):
+        data_dict = cls._dump_data(data)
+
         try:
-            data_dict = data.model_dump()
-            template = cls.model(**data_dict)
-
-            session.add(template)
+            record = cls.model(**data_dict)
+            session.add(record)
             await session.flush()
-            logger.info(f"Объект успешно создан: {data}")
-            return template
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при выполнении добавлении в базу даннх объекта: {}, ошибка: {}".format(data_dict, e))
+            await session.refresh(record)
+            await session.commit()
 
-    
+            logger.info("Created record: %s", data)
+            return record
+        except SQLAlchemyError as error:
+            await session.rollback()
+            logger.error("Error creating record %s: %s", data_dict, error)
+            raise
+
     @classmethod
-    @connection(commit=True)
-    async def update(cls, session: AsyncSession, data_id: str, data: BaseModel):
+    async def update(
+        cls,
+        data_id: str,
+        data: BaseModel | dict,
+        session: AsyncSession | None = None,
+    ):
+        record = None
+
         try:
             query = select(cls.model).where(cls.model.id == data_id)
             response = await session.execute(query)
             record = response.scalar_one_or_none()
 
             if record is None:
-                logger.warning("Объект с ID {} не найден".format(data_id))
+                logger.warning("Record with id %s not found", data_id)
                 return None
 
-            instance = data.model_dump(exclude_unset=False)
+            instance = cls._dump_data(data)
 
             if instance is None:
-                logger.warning("Данные для изменения не добавлены.")
+                logger.warning("No update data provided")
                 return None
 
             for key, value in instance.items():
@@ -92,68 +111,70 @@ class BaseRepository(Generic[T]):
 
             await session.flush()
             await session.refresh(record)
+            await session.commit()
 
-            logger.info("Данные с ID {} изменены".format(data_id))
-
+            logger.info("Updated record with id %s", data_id)
             return record
-        
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении данных объекта: {}, ошибка: {}".format(record, e))
+        except SQLAlchemyError as error:
+            await session.rollback()
+            logger.error("Error updating record %s: %s", record, error)
             raise
-        
-    
+
     @classmethod
-    @connection(commit=True)
-    async def delete(cls, session: AsyncSession, data_id: str):
+    async def delete(
+        cls,
+        data_id: str,
+        session: AsyncSession | None = None,
+    ):
         try:
             query = select(cls.model).where(cls.model.id == data_id)
             request = await session.execute(query)
             record = request.scalar_one_or_none()
 
             if record is None:
-                logger.warning("Объект с ID {} не найден".format(data_id))
+                logger.warning("Record with id %s not found", data_id)
                 return False
-            
+
             await session.delete(record)
             await session.flush()
+            await session.commit()
 
             return True
-
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении данных с ID: {}, ошибка: {}".format(data_id, e))
+        except SQLAlchemyError as error:
+            await session.rollback()
+            logger.error("Error deleting record with id %s: %s", data_id, error)
             raise
 
-    
     @classmethod
-    @connection(commit=False)
-    async def count(cls, session: AsyncSession, filters: BaseModel | None = None):
-        try:
-            filters_dict = filters.model_dump(exclude_unset=False) if filters else {}
+    async def count(
+        cls,
+        filters: BaseModel | None = None,
+        session: AsyncSession | None = None,
+    ):
+        filters_dict = filters.model_dump(exclude_unset=False) if filters else {}
 
+        try:
             query = select(func.count()).select_from(cls.model).filter_by(**filters_dict)
             response = await session.execute(query)
-
-            total_count = response.scalar_one_or_none()
-
-            return total_count
-        
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при получении количества объектов по фильтрам {}, ошибка: {}".format(filters_dict, e))
+            return response.scalar_one_or_none()
+        except SQLAlchemyError as error:
+            logger.error("Error counting records by filters %s: %s", filters_dict, error)
             raise
 
-
     @classmethod
-    @connection(commit=False)
-    async def exists(cls, session: AsyncSession, data_id: str):
+    async def exists(
+        cls,
+        data_id: str,
+        session: AsyncSession | None = None,
+    ):
         try:
-            response = await cls.find_by_id(session, data_id=data_id)
+            response = await cls.find_by_id(data_id=data_id, session=session)
 
             if response is None:
-                logger.warning("Объект с ID {} не существует".format(data_id))
+                logger.warning("Record with id %s does not exist", data_id)
                 return False
 
             return True
-        
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при проверке наличия объекта с ID {}, ошибка: {}".format(data_id, e))
+        except SQLAlchemyError as error:
+            logger.error("Error checking record existence by id %s: %s", data_id, error)
             raise
