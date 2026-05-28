@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel
@@ -7,13 +8,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.logger import logger
+from app.infrastructure.db.mapper_interface import MapperInterface
 
 
-T = TypeVar("T")
+DomainType = TypeVar("DomainType")
+ModelType = TypeVar("ModelType")
 
 
-class BaseRepository(Generic[T]):
-    model: type[T] | None = None
+class BaseRepository(
+    ABC,
+    Generic[DomainType, ModelType],
+):
+    model: type[ModelType] | None = None
+    mapper: type[
+        MapperInterface[DomainType, ModelType]
+    ] | None = None
 
     def __init__(self, session: AsyncSession):
         self.session = session

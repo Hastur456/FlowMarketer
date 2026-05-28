@@ -12,8 +12,12 @@ from app.modules.product.infrastructure.persistence.product_mapper import Produc
 from app.modules.product.infrastructure.persistence.product_model import ProductModel
 from app.modules.product.domain.repositories.product_repository import ProductRepository
 
-class SqlAlchemyProductRepository(BaseRepository, ProductRepository):
+class SqlAlchemyProductRepository(
+    BaseRepository[Product, ProductModel],
+    ProductRepository,
+):
     model = ProductModel
+    mapper = ProductMapper
 
     async def find_by_category(
         self,
