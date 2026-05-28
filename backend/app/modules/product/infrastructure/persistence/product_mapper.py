@@ -1,11 +1,12 @@
 import json
 from typing import Any
 
+from app.infrastructure.db.mapper_interface import MapperInterface
 from app.modules.product.domain.entities.product import Product
 from app.modules.product.infrastructure.persistence.product_model import ProductModel
 
 
-class ProductMapper:
+class ProductMapper(MapperInterface[Product, ProductModel]):
     @staticmethod
     def to_domain(model: ProductModel) -> Product:
         return Product(
@@ -76,6 +77,9 @@ class ProductMapper:
     def _loads_gallery_urls(value: str | None) -> list[str] | None:
         if not value:
             return None
+        
+        if isinstance(value, list):
+            return value
 
         try:
             loaded = json.loads(value)

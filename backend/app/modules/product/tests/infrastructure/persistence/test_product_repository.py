@@ -5,6 +5,7 @@ import pytest
 
 from app.modules.product.domain.entities.product import Product
 from app.modules.product.tests.factory import make_product
+from app.modules.product.infrastructure.persistence.sqlalchemy_product_repository import SqlAlchemyProductRepository
 
 
 pytestmark = pytest.mark.asyncio
@@ -103,7 +104,7 @@ async def test_find_active_returns_only_active_products(
 
 
 async def test_find_featured_returns_only_active_featured_products(
-    product_repository,
+    product_repository: SqlAlchemyProductRepository,
     db_session,
     category,
 ):

@@ -2,18 +2,19 @@ import sys
 from pathlib import Path
 from uuid import UUID
 
-import pytest
 import pytest_asyncio
-from docker.errors import DockerException
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from testcontainers.postgres import PostgresContainer
+from sqlalchemy.pool import StaticPool
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from app.infrastructure.db.base import Base
-from app.modules.product.infrastructure.persistence.product_model import ProductModel  # noqa: F401
+from app.modules.product.infrastructure.persistence.product_model import ProductModel
+
+
+TEST_DATABASE_URL = "sqlite+aiosqlite://"
 
 
 class Category(Base):
@@ -44,27 +45,15 @@ class Review(Base):
     product = relationship("ProductModel", back_populates="reviews")
 
 
-@pytest.fixture(scope="session")
-def postgres_container():
-    try:
-        with PostgresContainer(
-            image="postgres:16-alpine",
-            username="test",
-            password="test",
-            dbname="flow_marketer_test",
-            driver="asyncpg",
-        ) as postgres:
-            yield postgres
-    except DockerException as error:
-        pytest.skip(f"Docker is not available for PostgresContainer: {error}")
-
-
 @pytest_asyncio.fixture
-async def async_engine(postgres_container: PostgresContainer):
-    engine = create_async_engine(postgres_container.get_connection_url())
+async def async_engine():
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
 
     async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
         await connection.run_sync(Base.metadata.create_all)
 
     yield engine
