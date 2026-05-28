@@ -13,7 +13,7 @@ class UserService:
         self.user_repo = user_repo
 
     async def get_profile(self, session: AsyncSession, user_id: UUID) -> UserRead:
-        user = await self.user_repo.find_by_id(session, user_id)
+        user = await self.user_repo.find_by_id(user_id, session=session)
         if not user:
             raise NotFoundException("User not found")
         return UserRead.model_validate(user)

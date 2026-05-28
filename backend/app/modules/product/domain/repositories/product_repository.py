@@ -1,13 +1,11 @@
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 from uuid import UUID
 
 from app.modules.product.domain.entities.product import Product
 
 
+@runtime_checkable
 class ProductRepository(Protocol):
-    async def find_by_id(self, product_id: UUID) -> Product | None:
-        ...
-
     async def find_by_category(
         self,
         category_id: UUID,
@@ -29,15 +27,6 @@ class ProductRepository(Protocol):
         limit: int = 50,
         offset: int = 0,
     ) -> list[Product]:
-        ...
-
-    async def create(self, product: Product) -> Product:
-        ...
-
-    async def update(self, product_id: UUID, updates: dict) -> Product | None:
-        ...
-
-    async def delete(self, product_id: UUID) -> Product | None:
         ...
 
     async def update_stock(self, product_id: UUID, quantity_change: int) -> Product | None:
