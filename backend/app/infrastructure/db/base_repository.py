@@ -13,20 +13,25 @@ T = TypeVar("T")
 
 
 class BaseRepository(Generic[T]):
-    model: type[T] = None
+    model: type[T] | None = None
 
-    @staticmethod
-    def _dump_data(data: BaseModel | dict) -> dict:
-        return data.model_dump() if isinstance(data, BaseModel) else data
+    def __init__(self, session: AsyncSession):
+        self.session = session
 
-    @classmethod
+    def _dump_data(self, data: BaseModel | dict) -> dict:
+        return (
+            data.model_dump(exclude_none=True)
+            if isinstance(data, BaseModel)
+            else data
+        )
+
     async def find_by_id(
-        cls,
+        self,
         data_id: str,
         session: AsyncSession | None = None,
     ):
         try:
-            query = select(cls.model).where(cls.model.id == data_id)
+            query = select(self.model).where(self.model.id == data_id)
             response = await session.execute(query)
             record = response.scalar_one_or_none()
 
@@ -40,16 +45,15 @@ class BaseRepository(Generic[T]):
             logger.error("Error finding record by id %s: %s", data_id, error)
             raise
 
-    @classmethod
     async def find_all(
-        cls,
+        self,
         filters: BaseModel | None = None,
         session: AsyncSession | None = None
     ):
         filters_dict = filters.model_dump() if filters else {}
 
         try:
-            query = select(cls.model).filter_by(**filters_dict)
+            query = select(self.model).filter_by(**filters_dict)
             response = await session.execute(query)
             records = response.scalars().all()
 
@@ -59,16 +63,15 @@ class BaseRepository(Generic[T]):
             logger.error("Error finding records by filters %s: %s", filters_dict, error)
             raise
 
-    @classmethod
     async def create(
-        cls,
+        self,
         data: BaseModel | dict,
         session: AsyncSession | None = None,
     ):
-        data_dict = cls._dump_data(data)
+        data_dict = self._dump_data(data)
 
         try:
-            record = cls.model(**data_dict)
+            record = self.model(**data_dict)
             session.add(record)
             await session.flush()
             await session.refresh(record)
@@ -81,9 +84,8 @@ class BaseRepository(Generic[T]):
             logger.error("Error creating record %s: %s", data_dict, error)
             raise
 
-    @classmethod
     async def update(
-        cls,
+        self,
         data_id: str,
         data: BaseModel | dict,
         session: AsyncSession | None = None,
@@ -91,7 +93,7 @@ class BaseRepository(Generic[T]):
         record = None
 
         try:
-            query = select(cls.model).where(cls.model.id == data_id)
+            query = select(self.model).where(self.model.id == data_id)
             response = await session.execute(query)
             record = response.scalar_one_or_none()
 
@@ -99,7 +101,7 @@ class BaseRepository(Generic[T]):
                 logger.warning("Record with id %s not found", data_id)
                 return None
 
-            instance = cls._dump_data(data)
+            instance = self._dump_data(data)
 
             if instance is None:
                 logger.warning("No update data provided")
@@ -120,14 +122,13 @@ class BaseRepository(Generic[T]):
             logger.error("Error updating record %s: %s", record, error)
             raise
 
-    @classmethod
     async def delete(
-        cls,
+        self,
         data_id: str,
         session: AsyncSession | None = None,
     ):
         try:
-            query = select(cls.model).where(cls.model.id == data_id)
+            query = select(self.model).where(self.model.id == data_id)
             request = await session.execute(query)
             record = request.scalar_one_or_none()
 
@@ -145,30 +146,28 @@ class BaseRepository(Generic[T]):
             logger.error("Error deleting record with id %s: %s", data_id, error)
             raise
 
-    @classmethod
     async def count(
-        cls,
+        self,
         filters: BaseModel | None = None,
         session: AsyncSession | None = None,
     ):
         filters_dict = filters.model_dump(exclude_unset=False) if filters else {}
 
         try:
-            query = select(func.count()).select_from(cls.model).filter_by(**filters_dict)
+            query = select(func.count()).select_from(self.model).filter_by(**filters_dict)
             response = await session.execute(query)
             return response.scalar_one_or_none()
         except SQLAlchemyError as error:
             logger.error("Error counting records by filters %s: %s", filters_dict, error)
             raise
 
-    @classmethod
     async def exists(
-        cls,
+        self,
         data_id: str,
         session: AsyncSession | None = None,
     ):
         try:
-            response = await cls.find_by_id(data_id=data_id, session=session)
+            response = await self.find_by_id(data_id=data_id, session=session)
 
             if response is None:
                 logger.warning("Record with id %s does not exist", data_id)

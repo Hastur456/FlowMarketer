@@ -28,7 +28,7 @@ class Product(BaseModel):
     tags: Optional[str] = Field(None, max_length=500)
 
     image_url: Optional[str] = Field(None, max_length=500)
-    gallery_urls: Optional[list[str]] = None
+    gallery_urls: Optional[list[str]] = Field(default_factory=list)
 
     average_rating: float = Field(default=0.0, ge=0, le=5)
     review_count: int = Field(default=0, ge=0)

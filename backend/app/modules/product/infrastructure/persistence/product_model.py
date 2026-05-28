@@ -1,5 +1,17 @@
-from sqlalchemy import Boolean, Column, Float, ForeignKey, Index, Integer, Numeric, String, Text
-from sqlalchemy.orm import relationship
+from decimal import Decimal
+from typing import Optional
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Float,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import UUID as SA_UUID
 
 from app.infrastructure.db.base import Base
@@ -7,48 +19,143 @@ from app.infrastructure.db.base import Base
 
 class ProductModel(Base):
     __tablename__ = "products"
-    __table_args__ = (
-        Index("idx_products_slug", "slug", unique=True),
-        Index("idx_products_category_id", "category_id"),
-        Index("idx_products_is_active", "is_active"),
-        Index("idx_products_price", "price"),
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+
+    slug: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        unique=True,
+        index=True,
     )
 
-    name = Column(String(255), nullable=False, index=True)
-    slug = Column(String(255), nullable=False, unique=True, index=True)
-    description = Column(Text, nullable=True)
-    category_id = Column(SA_UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+    )
 
-    price = Column(Numeric(10, 2), nullable=False)
-    discount_price = Column(Numeric(10, 2), nullable=True)
-    cost_price = Column(Numeric(10, 2), nullable=True)
+    category_id: Mapped[SA_UUID] = mapped_column(
+        SA_UUID(as_uuid=True),
+        ForeignKey("categories.id"),
+        nullable=False,
+    )
 
-    stock_quantity = Column(Integer, default=0, nullable=False)
-    reserved_stock = Column(Integer, default=0, nullable=False)
-    sku = Column(String(100), unique=True, nullable=True, index=True)
+    price: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
 
-    meta_title = Column(String(255), nullable=True)
-    meta_description = Column(Text, nullable=True)
-    tags = Column(String(500), nullable=True)
+    discount_price: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(10, 2),
+        nullable=True,
+    )
 
-    image_url = Column(String(500), nullable=True)
-    gallery_urls = Column(Text, nullable=True)
+    cost_price: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(10, 2),
+        nullable=True,
+    )
 
-    average_rating = Column(Float, default=0.0, nullable=False)
-    review_count = Column(Integer, default=0, nullable=False)
+    stock_quantity: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
 
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
-    is_featured = Column(Boolean, default=False, nullable=False)
-    is_bestseller = Column(Boolean, default=False, nullable=False)
+    reserved_stock: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
 
-    popularity_score = Column(Integer, default=0, nullable=False)
-    sales_count = Column(Integer, default=0, nullable=False)
-    view_count = Column(Integer, default=0, nullable=False)
+    sku: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+
+    meta_title: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    meta_description: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    tags: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    image_url: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    gallery_urls: Mapped[list[str]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+
+    average_rating: Mapped[float] = mapped_column(
+        Float,
+        default=0.0,
+        nullable=False,
+    )
+
+    review_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+        index=True,
+    )
+
+    is_featured: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    is_bestseller: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    popularity_score: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
+    sales_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
+    view_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
 
     category = relationship("Category", back_populates="products")
     order_items = relationship("OrderItem", back_populates="product")
     cart_items = relationship("CartItem", back_populates="product")
-    reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
+    reviews = relationship(
+        "Review",
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<ProductModel(id={self.id}, name={self.name}, price={self.price})>"
