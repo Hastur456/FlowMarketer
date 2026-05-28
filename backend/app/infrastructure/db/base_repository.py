@@ -46,7 +46,7 @@ class BaseRepository(
 
             if record:
                 logger.info("Found record %s by id %s", record, data_id)
-                return record
+                return self.mapper.to_domain(record)
 
             logger.info("Record with id %s not found", data_id)
             return None
@@ -64,10 +64,10 @@ class BaseRepository(
         try:
             query = select(self.model).filter_by(**filters_dict)
             response = await session.execute(query)
-            records = response.scalars().all()
+            response = response.scalars().all()
 
-            logger.debug("Found %s records by filters %s", len(records), filters_dict)
-            return records
+            logger.debug("Found %s records by filters %s", len(response), filters_dict)
+            return [self.mapper.to_domain(model) for model in response]
         except SQLAlchemyError as error:
             logger.error("Error finding records by filters %s: %s", filters_dict, error)
             raise
@@ -87,7 +87,7 @@ class BaseRepository(
             await session.commit()
 
             logger.info("Created record: %s", data)
-            return record
+            return self.mapper.to_domain(record)
         except SQLAlchemyError as error:
             await session.rollback()
             logger.error("Error creating record %s: %s", data_dict, error)
@@ -125,7 +125,7 @@ class BaseRepository(
             await session.commit()
 
             logger.info("Updated record with id %s", data_id)
-            return record
+            return self.mapper.to_domain(record)
         except SQLAlchemyError as error:
             await session.rollback()
             logger.error("Error updating record %s: %s", record, error)
@@ -149,7 +149,7 @@ class BaseRepository(
             await session.flush()
             await session.commit()
 
-            return True
+            return self.mapper.to_domain(record)
         except SQLAlchemyError as error:
             await session.rollback()
             logger.error("Error deleting record with id %s: %s", data_id, error)
@@ -165,7 +165,7 @@ class BaseRepository(
         try:
             query = select(func.count()).select_from(self.model).filter_by(**filters_dict)
             response = await session.execute(query)
-            return response.scalar_one_or_none()
+            return response.scalar_one()
         except SQLAlchemyError as error:
             logger.error("Error counting records by filters %s: %s", filters_dict, error)
             raise
